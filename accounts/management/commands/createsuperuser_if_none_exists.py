@@ -1,7 +1,7 @@
 # management/commands/createsuperuser_if_none_exists.py
 
 from django.core.management.base import BaseCommand
-from .models import Account
+from django.contrib.auth import get_user_model
 import os
 
 class Command(BaseCommand):
