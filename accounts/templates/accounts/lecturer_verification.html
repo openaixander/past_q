@@ -1,0 +1,110 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+    Lecturer Verification - pastq
+{% endblock title %}
+
+    {% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .verification-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            margin: auto;
+        }
+        .form-control {
+            border-radius: 50px;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .file-upload input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            background: white;
+            cursor: inherit;
+            display: block;
+        }
+    {% endblock css %}
+
+
+{% block content %}
+    <div class="container my-5 pt-5">
+        <div class="verification-container">
+            <h2 class="text-center mb-4">Lecturer Verification</h2>
+            <form action="{% url 'accounts:lecturer_info' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <!-- <input type="text" class="form-control" id="employeeId" placeholder="Employee ID" required> -->
+                     {{ form.employee_id }}
+                </div>
+                <div class="mb-3">
+                    <!-- <input type="text" class="form-control" id="department" placeholder="Department" required> -->
+                     {{ form.department }}
+                </div>
+                <div class="mb-3">
+                    <!-- <input type="text" class="form-control" id="facultyPosition" placeholder="Faculty Position" required> -->
+                     {{ form.faculty_position }}
+                </div>
+                <div class="mb-3">
+                    <!-- <input type="text" class="form-control" id="officeNumber" placeholder="Office Number"> -->
+                     {{ form.office_number }}
+                </div>
+                <div class="mb-3">
+                    <label for="idCard" class="form-label">Upload Faculty ID Card</label>
+                    <div class="file-upload">
+                        <!-- <input type="file" class="form-control" id="idCard" accept="image/*" required> -->
+                         {{ form.id_card }}
+                    </div>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="confirmInfo" required>
+                    <label class="form-check-label" for="confirmInfo">I confirm that all information provided is accurate and true</label>
+                </div>
+                <button type="submit" class="btn btn-custom w-100">Submit for Verification</button>
+            </form>
+            <p class="text-center mt-4">Need help? <a href="#" class="text-decoration-none">Contact Support</a></p>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,0 +1,248 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+
+View Past Questions - PastQ
+{% endblock title %}
+
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .question-container {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .question-header {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .question-image {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .materials-list {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .material-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        .material-item:last-child {
+            border-bottom: none;
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .btn-custom-secondary {
+            background: linear-gradient(45deg, #4a69bd 0%, #6a89cc 100%);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .question-container {
+            animation: float 4s ease-in-out infinite;
+        }
+
+                /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 40px 0;
+            }
+            
+            .question-container {
+                padding: 20px;
+                margin: 15px;
+                animation: none; /* Disable float animation on mobile */
+            }
+            
+            .question-header {
+                padding: 12px;
+            }
+            
+            .question-header h2 {
+                font-size: 1.4rem;
+                margin-bottom: 8px;
+            }
+            
+            .question-header p {
+                font-size: 0.9rem;
+            }
+            
+            .materials-list {
+                padding: 12px;
+            }
+            
+            .material-item {
+                padding: 12px 8px;
+                flex-direction: column;
+            }
+            
+            .file-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .file-info div {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            
+            .file-info .btn {
+                width: 100%;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .download-buttons .btn {
+                width: 100%;
+                margin: 0;
+            }
+            
+            .file-name {
+                max-width: 200px;
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        /* Additional Mobile Tweaks */
+        .material-item {
+            transition: transform 0.2s ease;
+        }
+
+        .material-item:hover {
+            transform: translateX(5px);
+        }
+
+        .btn-custom, .btn-custom-secondary {
+            font-size: 0.95rem;
+            padding: 10px 20px;
+        }
+
+        @media (min-width: 769px) {
+            .download-buttons {
+                gap: 20px;
+            }
+        }
+{% endblock css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container">
+        <div class="question-container mt-5">
+            <div class="question-header">
+                <h2 class="text-center mb-0">{{ past_question.course.name }}</h2>
+                <p class="text-center mb-0">{{ past_question.year.value }} {{ past_question.course.semester.name }} Semester</p>
+            </div>
+
+            <div class="materials-list mt-4">
+                <h4 class="mb-3">Available Pages</h4>
+                
+                {% if past_question.images.all %}
+                    {% for image in past_question.images.all %}
+                    <div class="material-item">
+                        <div class="file-info">
+                            <div>
+                                <strong>Page {{ image.page_number }}</strong>
+                                <small class="text-muted file-name">
+                                    {# Get filename from Cloudinary public_id #}
+                                    {{ image.image.public_id|slice:"20:" }}
+                                    {% if image.image.public_id|length > 20 %}...{% endif %}
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {# Cloudinary automatically provides the URL #}
+                                <a href="{{ image.image.url }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-custom-secondary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{{ image.image.url }}" 
+                                   download 
+                                   class="btn btn-sm btn-custom">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted">No images available for this past question.</p>
+                {% endif %}
+            </div>
+
+            <div class="download-buttons text-center mt-4">
+                <a href="{% url 'faculty:download_pastq_images' past_question.pk %}" 
+                   class="btn btn-custom me-0 me-md-3">
+                    <i class="fas fa-file-archive"></i> Download All
+                </a>
+                <a href="{% url 'faculty:view_or_download_pastq' %}" class="btn btn-custom">
+                    <i class="fas fa-search"></i> Search More
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}

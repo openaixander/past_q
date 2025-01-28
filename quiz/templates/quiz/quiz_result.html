@@ -1,0 +1,162 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+    Quiz Results - pastq
+{% endblock title %}
+
+{% block css %}
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .navbar {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+    .navbar-brand img {
+        height: 40px;
+        margin-right: 10px;
+    }
+    .result-container {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        margin: 40px auto;
+    }
+    .result-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #6a11cb;
+    }
+    .score-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        margin: 0 auto 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        box-shadow: 0 8px 16px rgba(106, 17, 203, 0.2);
+    }
+    .result-summary {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .answer-review {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .correct-answer {
+        color: #28a745;
+        font-weight: 500;
+    }
+    .incorrect-answer {
+        color: #dc3545;
+        font-weight: 500;
+    }
+    .explanation {
+        background: #f8f9fa;
+        border-left: 4px solid #6a11cb;
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 0 5px 5px 0;
+    }
+    .btn-action {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(106, 17, 203, 0.2);
+        color: white;
+    }
+{% endblock css %}
+
+{% block content %}
+<div class="container">
+    <div class="result-container">
+        <div class="result-header">
+            <h1>Quiz Results</h1>
+            <div class="score-circle">
+                {{ attempt.score|floatformat:1 }}%
+            </div>
+            <h3>
+                {% if passed %}
+                    <span class="badge bg-success">PASSED</span>
+                {% else %}
+                    <span class="badge bg-danger">FAILED</span>
+                {% endif %}
+            </h3>
+        </div>
+
+        <div class="result-summary">
+            <h4>Summary</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Quiz:</strong> {{ attempt.quiz.title }}</p>
+                    <p><strong>Course:</strong> {{ attempt.quiz.course.code }} - {{ attempt.quiz.course.name }}</p>
+                    <p><strong>Start Time:</strong> {{ attempt.start_time }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>End Time:</strong> {{ attempt.end_time }}</p>
+                    <p><strong>Duration:</strong> {{ attempt.end_time|timeuntil:attempt.start_time }}</p>
+                    <p><strong>Pass Mark:</strong> {{ attempt.quiz.passing_score }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="mb-4">Answer Review</h4>
+        {% for response in responses %}
+        <div class="answer-review">
+            <h5>Question {{ forloop.counter }}</h5>
+            <p>{{ response.question.question_text }}</p>
+            
+            <p>Your Answer: 
+                <span class="{% if response.is_correct %}correct-answer{% else %}incorrect-answer{% endif %}">
+                    {{ response.selected_choice.choice_text }}
+                </span>
+            </p>
+            
+            {% if not response.is_correct %}
+            <p>Correct Answer: 
+                <span class="correct-answer">
+                    {{ response.question.choices.filter.is_correct.first.choice_text }}
+                </span>
+            </p>
+            {% endif %}
+            
+            {% if response.question.explanation %}
+            <div class="explanation">
+                <strong>Explanation:</strong><br>
+                {{ response.question.explanation }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="text-center mt-4">
+            <a href="{% url 'quiz:quiz_list' %}" class="btn-action me-3">Take Another Quiz</a>
+            <a href="{% url 'faculty:student_dashboard' %}" class="btn-action">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

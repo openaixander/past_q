@@ -1,0 +1,91 @@
+{% extends 'faculty/base.html' %}
+
+
+{% block title %}
+    pastq - Lecturer Account Activation
+{% endblock title %}
+
+{% block css %}
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .waiting-content {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            margin-top: 100px;
+        }
+        .loader {
+            width: 150px;
+            height: 150px;
+            border: 10px solid #f3f3f3;
+            border-top: 10px solid #6a11cb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-updates {
+            max-width: 400px;
+            margin: 30px auto;
+            text-align: left;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .status-icon {
+            margin-right: 15px;
+            font-size: 24px;
+        }
+        .completed {
+            color: #28a745;
+        }
+        .pending {
+            color: #ffc107;
+        }
+{% endblock css %}
+
+
+{% block content %}
+    <div class="container">
+        <div class="waiting-content mb-5 text-center">
+            <h1 class="mb-4">Account Activation in Progress</h1>
+            <div class="loader"></div>
+            <p class="lead">Thank you for registering as a lecturer on pastq. Your account is currently being reviewed by our admin team.</p>
+            <div class="status-updates">
+                <div class="status-item">
+                    <i class="fas fa-check-circle status-icon completed"></i>
+                    <span>Account created successfully</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-check-circle status-icon completed"></i>
+                    <span>Email verification completed</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-clock status-icon pending"></i>
+                    <span>Admin approval pending</span>
+                </div>
+            </div>
+            <p class="mt-4">We'll notify you via email once your account has been approved. This usually takes 1-2 business days.</p>
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary mt-3">Go To Login</a>
+        </div>
+    </div>
+{% endblock content %}

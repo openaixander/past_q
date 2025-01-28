@@ -1,0 +1,165 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+Upload Past Questions - pastq_file
+{% endblock title %}
+
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0e8ff 0%, #b0c4de 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .upload-form {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #4a69bd;
+        }
+        .form-select, .form-control {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(74, 105, 189, 0.2);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .form-select:focus, .form-control:focus {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 0.25rem rgba(74, 105, 189, 0.25);
+            border-color: #4a69bd;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #4a69bd 0%, #6a89cc 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+{% endblock css %}
+
+
+{% block content %}
+
+    <div class="main-content">
+        <div class="container">
+                        {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Error:</strong> Please correct the following errors:
+                <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field|title }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <form method="POST" action="" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                <h2 class="text-center mb-4" style="color: #4a69bd;">Upload Past Questions</h2>
+                <div class="mb-3">
+                    {{ form.department }}
+                </div>
+                <div class="mb-3">
+                    {{ form.level }}
+                </div>
+                <div class="mb-3">
+                    {{ form.semester }}
+                </div>
+                <div class="mb-3">
+                    {{ form.course }}
+                </div>
+                <div class="mb-3">
+                    {{ form.course_code }}
+                </div>
+                <div class="mb-3">
+                    {{ form.year }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.images.id_for_label }}" class="form-label">Upload Images</label>
+                    {{ form.images }}
+                    <small class="form-text text-muted">Select multiple images (JPEG, PNG, GIF, WEBP)</small>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-custom">Upload Past Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function loadCourses() {
+                var departmentId = $("#{{ form.department.id_for_label }}").val();
+                var levelId = $("#{{ form.level.id_for_label }}").val();
+                var semesterId = $("#{{ form.semester.id_for_label }}").val();
+                
+                if (departmentId && levelId && semesterId) {
+                    $.ajax({
+                        url: "{% url 'faculty:load_courses' %}",
+                        data: {
+                            'department': departmentId,
+                            'level': levelId,
+                            'semester': semesterId
+                        },
+                        success: function(data) {
+                            var courseSelect = $("#{{ form.course.id_for_label }}");
+                            courseSelect.empty();
+                            courseSelect.append('<option value="">Select Course</option>');
+                            $.each(data, function(index, item) {
+                                courseSelect.append($('<option></option>').val(item.id).text(item.name).data('code', item.code));
+                            });
+                        }
+                    });
+                } else {
+                    $("#{{ form.course.id_for_label }}").html('<option value="">Select Course</option>');
+                    $("#{{ form.course_code.id_for_label }}").val('');
+                }
+            }
+
+            $("#{{ form.department.id_for_label }}, #{{ form.level.id_for_label }}, #{{ form.semester.id_for_label }}").change(loadCourses);
+
+            $("#{{ form.course.id_for_label }}").change(function() {
+                var selectedOption = $(this).find("option:selected");
+                var courseCode = selectedOption.data("code");
+                $("#{{ form.course_code.id_for_label }}").val(courseCode);
+            });
+        });
+    </script>
+{% endblock content %}

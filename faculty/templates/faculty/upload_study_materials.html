@@ -1,0 +1,187 @@
+{% extends 'faculty/base.html' %}
+{% load static %}
+
+{% block title %}Upload Study Materials - pastq{% endblock title %}
+
+{% block css %}
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f0f8ff 0%, #d4e4f7 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+    .navbar-brand img {
+        height: 40px;
+        margin-right: 10px;
+    }
+    .main-content {
+        flex-grow: 1;
+        padding: 80px 0;
+    }
+    .upload-form {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #3498db;
+    }
+    .form-select, .form-control {
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(52, 152, 219, 0.2);
+        color: #333;
+        transition: all 0.3s ease;
+    }
+    .form-select:focus, .form-control:focus {
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        border-color: #3498db;
+    }
+    .btn-custom {
+        background: linear-gradient(45deg, #3498db 0%, #2980b9 100%);
+        border: none;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    .btn-custom:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+{% endblock css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container">
+        <form class="upload-form" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h2 class="text-center mb-4" style="color: #3498db;">Upload Study Materials</h2>
+
+            {% if messages %}
+            <div class="messages mb-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="id_department" class="form-label">Department</label>
+                {{ form.department }}
+                {% if form.department.errors %}
+                <div class="text-danger">{{ form.department.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_level" class="form-label">Level</label>
+                {{ form.level }}
+                {% if form.level.errors %}
+                <div class="text-danger">{{ form.level.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_semester" class="form-label">Semester</label>
+                {{ form.semester }}
+                {% if form.semester.errors %}
+                <div class="text-danger">{{ form.semester.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_course" class="form-label">Course</label>
+                {{ form.course }}
+                {% if form.course.errors %}
+                <div class="text-danger">{{ form.course.errors }}</div>
+                {% endif %}
+            </div>
+            
+
+            <div class="mb-3">
+                <label for="id_title" class="form-label">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div class="text-danger">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_material_type" class="form-label">Material Type</label>
+                {{ form.material_type }}
+                {% if form.material_type.errors %}
+                <div class="text-danger">{{ form.material_type.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_material_type" class="form-label">Session</label>
+                {{ form.year }}
+                {% if form.year.errors %}
+                <div class="text-danger">{{ form.year.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="files" class="form-label">Upload Study Material Files</label>
+                <input type="file" name="files" id="files" multiple 
+                       accept=".pdf,.doc,.docx,.ppt,.pptx" 
+                       class="form-control">
+                <small class="text-muted">Allowed file types: PDF, DOC, DOCX, PPT, PPTX (Multiple files allowed)</small>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-custom">Upload Study Material</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const departmentSelect = document.getElementById('id_department');
+        const levelSelect = document.getElementById('id_level');
+        const semesterSelect = document.getElementById('id_semester');
+        const courseSelect = document.getElementById('id_course');
+
+        function updateCourses() {
+            if (departmentSelect.value && levelSelect.value && semesterSelect.value) {
+                fetch(`{% url 'faculty:load_courses_for_material' %}?department=${departmentSelect.value}&level=${levelSelect.value}&semester=${semesterSelect.value}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        courseSelect.innerHTML = '<option value="">Select Course</option>';
+                        data.forEach(course => {
+                            courseSelect.innerHTML += `<option value="${course.id}">${course.code} - ${course.name}</option>`;
+                        });
+                        courseSelect.disabled = false;
+                    });
+            } else {
+                courseSelect.innerHTML = '<option value="">Select Course</option>';
+                courseSelect.disabled = true;
+            }
+        }
+
+        departmentSelect.addEventListener('change', updateCourses);
+        levelSelect.addEventListener('change', updateCourses);
+        semesterSelect.addEventListener('change', updateCourses);
+    });
+</script>
+{% endblock content%}

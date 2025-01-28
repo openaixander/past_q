@@ -1,0 +1,252 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+
+View/Download Past Questions - pastq
+
+{% endblock title %}
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .search-form {
+            max-width: 300px;
+            margin-left: auto;
+        }
+        .search-form .form-control {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(106, 17, 203, 0.2);
+            color: #6a11cb;
+            border-radius: 20px 0 0 20px;
+        }
+        .search-form .form-control::placeholder {
+            color: rgba(106, 17, 203, 0.7);
+        }
+        .search-form .btn {
+            border-radius: 0 20px 20px 0;
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .past-questions-form {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #6a11cb;
+        }
+        .form-select, .form-control {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(106, 17, 203, 0.2);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .form-select:focus, .form-control:focus {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
+            border-color: #6a11cb;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .past-questions-form {
+            animation: float 4s ease-in-out infinite;
+        }
+        @media (max-width: 991px) {
+            .search-form {
+                max-width: 100%;
+                margin-top: 15px;
+            }
+        }
+{% endblock css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container mt-5">
+        <form method="post" action="{% url 'faculty:process_past_question_form' %}" id="past-questions-form" class="past-questions-form">
+            {% csrf_token %}
+            <h2 class="text-center mb-4" style="color: #6a11cb;">View/Download Past Questions</h2>
+
+            <div class="mb-3">
+                <label for="department" class="form-label">Department</label>
+                <select name="department" id="department" class="form-select" required>
+                    <option value="">Select Department</option>
+                    {% for department in departments %}
+                        <option value="{{ department.id }}">{{ department.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="level" class="form-label">Level</label>
+                <select name="level" id="level" class="form-select" required>
+                    <option value="">Select Level</option>
+                    {% for level in levels %}
+                        <option value="{{ level.id }}">Level {{ level.value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="semester" class="form-label">Semester</label>
+                <select name="semester" id="semester" class="form-select" required>
+                    <option value="">Select Semester</option>
+                    {% for semester in semesters %}
+                        <option value="{{ semester.id }}">{{ semester.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="year" class="form-label">Session</label>
+                <select name="year" id="year" class="form-select" required>
+                    <option value="">Select Session</option>
+                    {% for year in years %}
+                        <option value="{{ year.id }}">{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="course" class="form-label">Course</label>
+                <select name="course" id="course" class="form-select" required>
+                    <option value="">Select Course</option>
+                    <!-- Courses will be dynamically populated here -->
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="course_code" class="form-label">Course Code</label>
+                <input type="text" name="course_code" id="course_code" class="form-control" readonly>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-custom">View Past Questions</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('past-questions-form');
+        const departmentSelect = document.getElementById('department');
+        const levelSelect = document.getElementById('level');
+        const semesterSelect = document.getElementById('semester');
+        const yearSelect = document.getElementById('year');
+        const courseSelect = document.getElementById('course');
+        const courseCodeInput = document.getElementById('course_code');
+        
+        // Check if all elements exist
+        if (!form || !departmentSelect || !levelSelect || !semesterSelect || !yearSelect || !courseSelect || !courseCodeInput) {
+            console.error('One or more form elements are missing');
+            return;
+        }
+    
+        let allCourses = [];
+        try {
+            allCourses = JSON.parse('{{ all_courses_json|safe }}');
+        } catch (error) {
+            console.error('Error parsing courses JSON:', error);
+        }
+    
+        function updateCourses() {
+            const department = departmentSelect.value;
+            const level = levelSelect.value;
+            const semester = semesterSelect.value;
+            const year = yearSelect.value;
+    
+            // Only proceed if all fields are selected
+            if (department && level && semester && year) {
+                const formData = new FormData(form);
+                fetch('{% url "faculty:view_or_download_pastq" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    allCourses = JSON.parse(data.courses);
+                    populateCourseSelect(allCourses);
+                })
+                .catch(error => {
+                    console.error('Error fetching courses:', error);
+                });
+            } else {
+                // Clear course select if not all fields are selected
+                courseSelect.innerHTML = '<option value="">Select Course</option>';
+                courseCodeInput.value = '';
+            }
+        }
+    
+        function populateCourseSelect(courses) {
+            courseSelect.innerHTML = '<option value="">Select Course</option>';
+            courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.pk;
+                option.textContent = `${course.fields.code} - ${course.fields.name}`;
+                courseSelect.appendChild(option);
+            });
+            courseCodeInput.value = '';
+        }
+    
+        // Add change event listeners to all select elements
+        [departmentSelect, levelSelect, semesterSelect, yearSelect].forEach(select => {
+            select.addEventListener('change', updateCourses);
+        });
+    
+        courseSelect.addEventListener('change', function() {
+            const selectedCourse = allCourses.find(course => course.pk == this.value);
+            courseCodeInput.value = selectedCourse ? selectedCourse.fields.code : '';
+        });
+    });
+    </script>
+{% endblock content %}

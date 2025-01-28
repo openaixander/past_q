@@ -1,0 +1,229 @@
+{% extends 'faculty/base.html' %}
+
+
+{% block title %}
+    Start Quiz - pastq
+{% endblock title %}
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .search-form {
+            max-width: 300px;
+            margin-left: auto;
+        }
+        .search-form .form-control {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(106, 17, 203, 0.2);
+            color: #6a11cb;
+            border-radius: 20px 0 0 20px;
+        }
+        .search-form .btn {
+            border-radius: 0 20px 20px 0;
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .quiz-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .quiz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+        }
+        .quiz-title {
+            color: #6a11cb;
+            font-weight: 600;
+        }
+        .quiz-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+        .filters {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+{% endblock css %}
+
+
+{% block content %}
+    <div class="main-content">
+        <div class="container">
+            <h1 class="text-center mb-4" style="color: #6a11cb;">Available Quizzes</h1>
+            
+            <div class="filters">
+                <form method="get" id="filterForm">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <select name="department" class="form-select" id="departmentFilter">
+                                <option value="">All Departments</option>
+                                {% for department in departments %}
+                                    <option value="{{ department.id }}" {% if request.GET.department|stringformat:"s" == department.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ department.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select name="level" class="form-select" id="levelFilter">
+                                <option value="">All Levels</option>
+                                {% for level in levels %}
+                                    <option value="{{ level.id }}" {% if request.GET.level|stringformat:"s" == level.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ level.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select name="semester" class="form-select" id="semesterFilter">
+                                <option value="">All Semesters</option>
+                                {% for semester in semesters %}
+                                    <option value="{{ semester.id }}" {% if request.GET.semester|stringformat:"s" == semester.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ semester.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button type="submit" class="btn btn-custom w-100">Apply Filters</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="row g-4" id="quizList">
+                {% if quizzes %}
+                    {% for quiz in quizzes %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="quiz-card">
+                                <h3 class="quiz-title">{{ quiz.title }}</h3>
+                                <p class="quiz-info">
+                                    <i class="fas fa-book"></i> {{ quiz.course.code }} - {{ quiz.course.name }}<br>
+                                    <i class="fas fa-graduation-cap"></i> 
+                                    {% for department in quiz.departments.all %}
+                                        {{ department.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}<br>
+                                    <i class="fas fa-layer-group"></i>
+                                    {% for level in quiz.levels.all %}
+                                        {{ level.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}<br>
+                                    <i class="fas fa-clock"></i> {{ quiz.duration_minutes }} minutes<br>
+                                    <i class="fas fa-question-circle"></i> {{ quiz.total_questions }} questions
+                                </p>
+                                <p>{{ quiz.description|truncatewords:20 }}</p>
+                                <a href="{% url 'quiz:start_quiz' quiz.id %}" class="btn btn-custom mt-auto align-self-start">Start Quiz</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            No quizzes found matching your criteria. Try adjusting your filters.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const levelFilter = document.getElementById('levelFilter');
+    const semesterFilter = document.getElementById('semesterFilter');
+    
+    // Function to update quizzes via AJAX
+    function updateQuizzes() {
+        const formData = new FormData(filterForm);
+        const queryString = new URLSearchParams(formData).toString();
+        
+        fetch(`{% url 'quiz:load_quiz_filters' %}?${queryString}`)
+            .then(response => response.json())
+            .then(data => {
+                const quizList = document.getElementById('quizList');
+                quizList.innerHTML = ''; // Clear current quizzes
+                
+                if (data.length === 0) {
+                    quizList.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                No quizzes found matching your criteria. Try adjusting your filters.
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                data.forEach(quiz => {
+                    const quizCard = `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="quiz-card">
+                                <h3 class="quiz-title">${quiz.title}</h3>
+                                <p class="quiz-info">
+                                    <i class="fas fa-book"></i> ${quiz.course__code} - ${quiz.course__name}<br>
+                                    <i class="fas fa-clock"></i> ${quiz.duration_minutes} minutes<br>
+                                    <i class="fas fa-question-circle"></i> ${quiz.total_questions} questions
+                                </p>
+                                <a href="/quiz/${quiz.id}/start/" class="btn btn-custom mt-auto align-self-start">Start Quiz</a>
+                            </div>
+                        </div>
+                    `;
+                    quizList.innerHTML += quizCard;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    // Update quizzes when filters change
+    departmentFilter.addEventListener('change', updateQuizzes);
+    levelFilter.addEventListener('change', updateQuizzes);
+    semesterFilter.addEventListener('change', updateQuizzes);
+});
+</script>
+{% endblock content %}

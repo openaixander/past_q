@@ -1,0 +1,151 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+    pastq - Select User Type
+{% endblock title %}
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand, .nav-link {
+            color: #333;
+            <!-- font-weight: 600; -->
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .hero-section {
+            background: url('https://loremflickr.com/1200/800/education,technology') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            padding: 100px 0;
+            margin-bottom: 50px;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(106, 17, 203, 0.8) 0%, rgba(37, 117, 252, 0.8) 100%);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            color: white;
+            text-align: center;
+        }
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        .user-type-section {
+            padding: 50px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .user-type-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        .user-type-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(106, 17, 203, 0.2);
+        }
+        .user-type-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-type-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .user-type-description {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .user-type-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+{% endblock css %}
+
+
+{% block content %}
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="animate__animated animate__fadeInDown">Join pastq Today</h1>
+                <p class="animate__animated animate__fadeInUp">Choose your role and start your journey towards academic excellence</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="user-type-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-5 mb-4">
+                    <div class="user-type-card animate__animated animate__fadeInLeft">
+                        <i class="fas fa-user-graduate user-type-icon"></i>
+                        <h2 id="i-am-a-student" class="user-type-title">I am a Student</h2>
+                        <p>Access past questions, download resources, and view progress.</p>
+                        <a href="{% url 'faculty:student_dashboard' %}" class="btn btn-custom">Get Started as Student</a>
+                    </div>
+                </div>
+                <div class="col-md-5 mb-4">
+                    <div class="user-type-card animate__animated animate__fadeInRight">
+                        <i class="fas fa-chalkboard-teacher user-type-icon"></i>
+                        <h2 id="i-am-a-lecturer" class="user-type-title">I am a Lecturer</h2>
+                        <p>Create and manage question banks, set up practice tests, and monitor student performance.</p>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-custom">Get Started as Lecturer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}

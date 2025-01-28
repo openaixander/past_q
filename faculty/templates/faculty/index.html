@@ -1,0 +1,216 @@
+{% extends 'faculty/base.html' %}
+
+   {% block title %} 
+   pastq - Revolutionizing Exam Preparation
+   {% endblock title %}
+
+
+   {% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .hero {
+            background: url('https://picsum.photos/1200/600?study,books') no-repeat center center;
+            background-size: cover;
+            height: 70vh;
+            position: relative;
+        }
+        .hero-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .floating-stats {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .testimonial {
+            font-style: italic;
+            position: relative;
+            padding: 20px;
+        }
+        .testimonial::before, .testimonial::after {
+            content: '"';
+            font-size: 60px;
+            color: rgba(106, 17, 203, 0.2);
+            position: absolute;
+        }
+        .testimonial::before {
+            top: -10px;
+            left: -10px;
+        }
+        .testimonial::after {
+            bottom: -40px;
+            right: -10px;
+        }
+        @media (max-width: 768px) {
+            .hero {
+                height: 60vh;
+            }
+            .floating-stats {
+                flex-direction: column;
+                align-items: center;
+                bottom: 10px;
+            }
+            .about-content {
+                margin-bottom: 20px;
+            }
+        }
+    {% endblock css %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+            {% include 'faculty/includes/alerts.html' %}
+            <h1 class="display-4 mt-5 text-white fw-bold">Revolutionize Your Exam Preparation</h1>
+            <p class="lead">Access past questions, create quizzes, and track your progress with pastq</p>
+            {% if request.user.is_authenticated %}
+                {% if request.user.is_lecturer and request.user.is_approved  %}
+                    <a href="{% url 'faculty:lecturer_dashboard' %}" class="btn btn-custom btn-lg mt-3">Go To Dashboard</a>
+                {% endif %}
+            {% else %}
+            <a href="{% url 'faculty:choice' %}" class="btn btn-custom btn-lg mt-3">Get Started</a>
+            {% endif %}
+        </div>
+        <!-- <div class="floating-stats">
+            <div class="stat-card">
+                <h3>10k+</h3>
+                <p>Users</p>
+            </div>
+            <div class="stat-card">
+                <h3>50k+</h3>
+                <p>Questions</p>
+            </div>
+            <div class="stat-card">
+                <h3>95%</h3>
+                <p>Success Rate</p>
+            </div>
+        </div> -->
+    </section>
+
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Features</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <i class="fas fa-book-open fa-3x mb-3 text-primary"></i>
+                        <h3>Past Questions</h3>
+                        <p>Access a comprehensive database of past exam questions to enhance your preparation.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <i class="fas fa-tasks fa-3x mb-3 text-primary"></i>
+                        <h3>Custom Quizzes</h3>
+                        <p>Create personalized quizzes to focus on specific topics and improve your weak areas.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                        <h3>Progress Tracking</h3>
+                        <p>Monitor your performance and track your progress over time with detailed analytics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-5 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 about-content">
+                    <h2>About pastq</h2>
+                    <p>pastq is a revolutionary exam preparation platform designed to help students excel in their studies. Our mission is to provide accessible, efficient, and effective study tools for learners of all levels.</p>
+                    <a href="{% url 'faculty:about_pastq' %}" class="btn btn-custom">Learn More</a>
+                </div>
+                <div class="col-md-6">
+                    <img src="https://picsum.photos/500/400?books" alt="About pastq" class="img-fluid rounded">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- <section id="testimonials" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">What Our Users Say</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <div class="testimonial">
+                            pastq has been a game-changer for my exam preparation. I've seen a significant improvement in my grades!
+                        </div>
+                        <p class="text-end mt-3">- Sarah J., Student</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <div class="testimonial">
+                            As a lecturer, pastq has made it incredibly easy to create and distribute practice materials to my students.
+                        </div>
+                        <p class="text-end mt-3">- Dr. Michael L., Professor</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="glass-card">
+                        <div class="testimonial">
+                            The progress tracking feature has helped me identify and focus on my weak areas. Highly recommended!
+                        </div>
+                        <p class="text-end mt-3">- Alex T., Graduate Student</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> -->
+{% endblock content %}

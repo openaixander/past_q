@@ -1,0 +1,191 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+    {{ attempt.quiz.title }} - pastq
+{% endblock title %}
+
+{% block css %}
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+    .navbar {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+    .navbar-brand img {
+        height: 40px;
+        margin-right: 10px;
+    }
+    .quiz-container {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        margin: 40px auto;
+    }
+    .quiz-header {
+        border-bottom: 2px solid #6a11cb;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+    }
+    .timer {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 50px;
+        display: inline-block;
+        font-weight: 600;
+    }
+    .question-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .question-text {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .choices-list {
+        list-style: none;
+        padding: 0;
+    }
+    .choice-item {
+        margin-bottom: 10px;
+    }
+    .choice-label {
+        display: block;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .choice-label:hover {
+        background: #f8f9fa;
+        border-color: #6a11cb;
+    }
+    .choice-input:checked + .choice-label {
+        background: #6a11cb;
+        color: white;
+        border-color: #6a11cb;
+    }
+    .btn-submit-quiz {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .btn-submit-quiz:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(106, 17, 203, 0.2);
+    }
+    .progress-bar {
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        border-radius: 5px;
+        transition: width 0.3s ease;
+    }
+{% endblock css %}
+
+{% block content %}
+<div class="container">
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>{{ attempt.quiz.title }}</h1>
+                <div class="timer" id="quiz-timer">
+                    Time remaining: <span id="time-display">Loading...</span>
+                </div>
+            </div>
+            <div class="quiz-info mt-3">
+                <p>Course: {{ attempt.quiz.course.code }} - {{ attempt.quiz.course.name }}</p>
+                <p>Total Questions: {{ questions|length }}</p>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <form method="POST" id="quiz-form">
+            {% csrf_token %}
+            {% for question in questions %}
+            <div class="question-card" id="question-{{ forloop.counter }}">
+                <div class="question-text">
+                    <span class="badge bg-primary me-2">Question {{ forloop.counter }}</span>
+                    {{ question.question_text }}
+                </div>
+                <ul class="choices-list">
+                    {% for choice in question.choices.all %}
+                    <li class="choice-item">
+                        <input type="radio" 
+                               name="question_{{ question.id }}" 
+                               value="{{ choice.id }}" 
+                               id="choice_{{ choice.id }}"
+                               class="d-none choice-input"
+                               >
+                        <label for="choice_{{ choice.id }}" class="choice-label">
+                            {{ choice.choice_text }}
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn-submit-quiz">Submit Quiz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Timer functionality
+        const duration = {{ attempt.quiz.duration_minutes }} * 60; // Convert to seconds
+        let timeLeft = duration;
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('time-display').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                document.getElementById('quiz-form').submit();
+            }
+            timeLeft--;
+        }
+        
+        updateTimer();
+        setInterval(updateTimer, 1000);
+        
+        // Progress bar functionality
+        const form = document.getElementById('quiz-form');
+        const totalQuestions = {{ questions|length }};
+        
+        function updateProgress() {
+            const answered = form.querySelectorAll('input[type="radio"]:checked').length;
+            const progress = (answered / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+        
+        form.addEventListener('change', updateProgress);
+    });
+</script>
+{% endblock content %}

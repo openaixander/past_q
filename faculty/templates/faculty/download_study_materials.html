@@ -1,0 +1,214 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+Download Study Materials - {{ material.course.name }}
+{% endblock title %}
+
+{% block css %}
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .navbar {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+    .navbar-brand img {
+        height: 40px;
+        margin-right: 10px;
+    }
+    .main-content {
+        flex-grow: 1;
+        padding: 40px 15px;  /* Reduced padding for mobile */
+    }
+    .materials-container {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;  /* Reduced padding */
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #333;
+        width: 100%;  /* Full width on mobile */
+        max-width: 800px;
+        margin: 0 auto;
+        animation: float 4s ease-in-out infinite;
+    }
+    .materials-header {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .materials-list {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        padding: 15px;  /* Reduced padding */
+        margin-bottom: 20px;
+    }
+    .material-item {
+        display: flex;
+        flex-direction: column;  /* Stack on mobile */
+        justify-content: space-between;
+        align-items: flex-start;  /* Align left */
+        padding: 15px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease;
+    }
+    .material-item:last-child {
+        border-bottom: none;
+    }
+    .material-details {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .material-info {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .file-badge {
+        background-color: rgba(41, 128, 185, 0.1);
+        color: #2980b9;
+        padding: 3px 8px;
+        border-radius: 15px;
+        font-size: 0.7em;
+    }
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .file-name {
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .btn-custom {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        border: none;
+        color: white;
+        padding: 10px 15px;  /* Reduced padding */
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;  /* Full width on mobile */
+        justify-content: center;
+        margin-top: 10px;  /* Added margin */
+    }
+    .download-buttons {
+        display: flex;
+        flex-direction: column;  /* Stack buttons vertically on mobile */
+        gap: 15px;  /* Space between buttons */
+    }
+    .cover-image {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        width: 100%;  /* Responsive image */
+    }
+
+    @media (min-width: 768px) {
+        .material-item {
+            flex-direction: row;
+            align-items: center;
+        }
+        .material-details {
+            width: auto;
+            margin-bottom: 0;
+        }
+        .btn-custom {
+            width: auto;
+            margin-top: 0;
+        }
+        .download-buttons {
+            flex-direction: row;
+        }
+    }
+{% endblock css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container">
+        <div class="materials-container mt-5">
+            <div class="materials-header">
+                <h2 class="mb-0">{{ material.course.name }} - Study Materials</h2>
+                <p class="mb-0">{{ material.year.value }} {{ material.course.semester.name }} Semester</p>
+            </div>
+
+            <div class="materials-list">
+                <h4 class="mb-3">Available Materials</h4>
+                
+                {% for study_material in study_materials %}
+                <div class="material-item">
+                    <div class="material-details">
+                        <div class="material-info">
+                            <div>
+                                <strong>
+                                    {% if study_materials|length > 1 %}
+                                        {% if forloop.first %}
+                                            {{ study_material.get_material_type_display }}
+                                        {% else %}
+                                            {{ study_material.get_material_type_display }} {{ forloop.counter }}
+                                        {% endif %}
+                                    {% else %}
+                                        {{ study_material.get_material_type_display }}
+                                    {% endif %}
+                                </strong>
+                                <span class="file-badge ml-2">{{ study_material.material_type }}</span>
+                            </div>
+                            <div class="file-info">
+                                <small class="text-muted mr-2">
+                                    {# Cloudinary provides file size information #}
+                                    {{ study_material.files.size|filesizeformat }}
+                                </small>
+                                <small class="text-muted file-name">
+                                    {# Get filename from Cloudinary public_id #}
+                                    {{ study_material.files.public_id|slice:"20:" }}
+                                    {% if study_material.files.public_id|length > 20 %}...{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'faculty:download_file' study_material.pk %}" 
+                       class="btn btn-sm btn-custom" 
+                       download>
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted">No materials available for this course and session.</p>
+                {% endfor %}
+            </div>
+
+            <div class="download-buttons text-center mt-4">
+                <a href="{% url 'faculty:download_multiple_files' material.pk %}" 
+                   class="btn btn-custom me-0 me-md-3">
+                    <i class="fas fa-download"></i> Download All Materials
+                </a>
+                <a href="{% url 'faculty:download_materials' %}" class="btn btn-custom">
+                    <i class="fas fa-search"></i> Search More Materials
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}

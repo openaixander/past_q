@@ -1,0 +1,127 @@
+{% extends 'faculty/base.html' %}
+
+{% block title %}
+Lecturer Dashboard - pastq
+{% endblock title %}
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #333;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+        }
+        .dashboard-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #4a69bd;
+        }
+        .dashboard-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #4a69bd 0%, #6a89cc 100%);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .welcome-banner {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 20px 0;
+            margin-top: auto;
+            backdrop-filter: blur(10px);
+        }
+        .nav-link {
+            color: #333 !important;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .dashboard-card {
+            animation: float 4s ease-in-out infinite;
+        }
+{% endblock css %}
+
+{% block content %}
+    <div class="main-content">
+        <div class="container">
+           <div class="welcome-banner">
+                {% include 'faculty/includes/alerts.html' %}
+                <h2>Welcome, {{ lecturer_profile.faculty_position }} {{ request.user.full_name }}!</h2>
+                <p>Empower your students with the tools they need to succeed. What would you like to do today?</p>
+            </div> 
+            <div class="row g-4">
+                {% for card in cards %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="dashboard-card">
+                        <i class="fas fa-{{ card.icon }} dashboard-icon"></i>
+                        <h3 class="dashboard-title">{{ card.title }}</h3>
+                        <p>{{ card.description }}</p>
+                        <a href="{% url 'faculty:'|add:card.url_name %}" class="btn btn-custom mt-3">{{ card.action_text }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}
