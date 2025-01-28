@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
 
     # default apps
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
