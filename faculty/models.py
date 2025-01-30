@@ -136,9 +136,9 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=200)
     year = models.ForeignKey(Session, on_delete=models.CASCADE)
     material_type = models.CharField(max_length=20, choices=MATERIAL_TYPES)
-    files = CloudinaryField('raw',
-                          folder='study_materials/',  # Maintains your folder structure
-                          resource_type='raw',
+    files = CloudinaryField('files',
+                          folder='study_materials/',
+                          resource_type='auto',  # Changed from 'raw' to 'auto'
                           allowed_formats=['pdf', 'doc', 'docx', 'ppt', 'pptx'])
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
