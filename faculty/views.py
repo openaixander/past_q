@@ -296,53 +296,47 @@ def download_multiple_files(request, pk):
     try:
         with ZipFile(zip_buffer, 'w') as zip_file:
             for mat in study_materials:
-                if mat.files:
+                if mat.files and mat.files.url:  # Check if file exists and has URL
                     try:
-                        # Download from Cloudinary with proper error handling
-                        response = cloudinary.api.resource(mat.files.public_id)
-                        file_url = response.get('secure_url')
+                        # Get direct secure URL from the CloudinaryResource
+                        file_url = mat.files.url
                         
-                        if not file_url:
-                            download_errors.append(f"Missing URL for {mat.title}")
-                            continue
+                        # Download the file content with a streaming request
+                        with requests.get(file_url, stream=True) as file_response:
+                            file_response.raise_for_status()  # Raise exception for bad status codes
                             
-                        file_response = requests.get(file_url)
-                        if file_response.status_code == 200:
-                            # Add to zip with proper filename
-                            filename = os.path.basename(mat.files.public_id)
-                            zip_file.writestr(filename, file_response.content)
-                        else:
-                            download_errors.append(f"Failed to download {mat.title}")
+                            # Get the original filename, fallback to public_id if not available
+                            original_filename = mat.files.name or os.path.basename(mat.files.public_id)
                             
-                    except cloudinary.api.NotFound:
-                        # Handle case where file doesn't exist in Cloudinary
-                        download_errors.append(f"File not found in cloud storage: {mat.title}")
-                        # Optionally remove the file reference from database
-                        mat.files = None
-                        mat.save()
-                        
+                            # Stream the file content directly into the zip
+                            file_content = file_response.content
+                            if file_content:  # Verify we got actual content
+                                zip_file.writestr(original_filename, file_content)
+                            else:
+                                download_errors.append(f"Empty file content for: {mat.title}")
+                            
+                    except requests.exceptions.RequestException as e:
+                        download_errors.append(f"Failed to download {mat.title}: {str(e)}")
                     except Exception as e:
                         download_errors.append(f"Error processing {mat.title}: {str(e)}")
+                else:
+                    download_errors.append(f"No valid file URL for: {mat.title}")
         
-        if download_errors:
-            # If some files failed but others succeeded, show warning
-            error_message = "Some files couldn't be downloaded: " + "; ".join(download_errors)
-            messages.warning(request, error_message)
-            
+        # Check if we actually added any files to the zip
         if zip_buffer.tell() == 0:
-            # No files were successfully added to zip
             messages.error(request, "No files could be downloaded. Please contact support.")
             return redirect('faculty:download_study_materials', pk=pk)
-            
+        
+        if download_errors:
+            # Log errors for debugging
+            print("Download errors:", download_errors)
+            messages.warning(request, "Some files couldn't be downloaded. Please try again or contact support.")
+        
         # Prepare the response
         zip_buffer.seek(0)
         response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
         return response
-        
-    except Exception as e:
-        messages.error(request, f"An error occurred while preparing download: {str(e)}")
-        return redirect('faculty:download_study_materials', pk=pk)
         
     except Exception as e:
         messages.error(request, f"An error occurred while preparing download: {str(e)}")
