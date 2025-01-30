@@ -175,10 +175,6 @@ class StudyMaterialForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    title = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
     year = forms.ModelChoiceField(
         required=True,
         queryset=Session.objects.all(),
@@ -202,7 +198,7 @@ class StudyMaterialForm(forms.ModelForm):
 
     class Meta:
         model = StudyMaterial
-        fields = ['title', 'material_type','year']
+        fields = ['material_type','year']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
