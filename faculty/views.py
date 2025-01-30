@@ -457,7 +457,6 @@ def upload_study_material(request):
                 for uploaded_file in valid_files:
                     study_material = StudyMaterial.objects.create(
                         course=course,
-                        title=form.cleaned_data['title'],
                         material_type=form.cleaned_data['material_type'],
                         year=form.cleaned_data['year'],
                         files=uploaded_file,
