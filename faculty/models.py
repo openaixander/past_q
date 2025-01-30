@@ -143,29 +143,6 @@ class StudyMaterial(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
-     def get_file_size(self):
-        """Get the file size from Cloudinary"""
-        try:
-            if self.files:
-                import cloudinary.api
-                resource = cloudinary.api.resource(self.files.public_id)
-                bytes_size = resource.get('bytes', 0)
-                return bytes_size
-            return 0
-        except Exception as e:
-            print(f"Error getting file size: {str(e)}")
-            return 0
-
-    def get_formatted_size(self):
-        """Return human-readable file size"""
-        bytes_size = self.get_file_size()
-        
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if bytes_size < 1024:
-                return f"{bytes_size:.1f} {unit}"
-            bytes_size /= 1024
-        return f"{bytes_size:.1f} GB"
-
 
     def get_material_display_name(self, total_materials=1):
         """
@@ -196,6 +173,29 @@ class StudyMaterial(models.Model):
                 return f"{material_type_display} {index}"
         
         return material_type_display
+        
+    def get_file_size(self):
+        """Get the file size from Cloudinary"""
+        try:
+            if self.files:
+                import cloudinary.api
+                resource = cloudinary.api.resource(self.files.public_id)
+                bytes_size = resource.get('bytes', 0)
+                return bytes_size
+            return 0
+        except Exception as e:
+            print(f"Error getting file size: {str(e)}")
+            return 0
+    
+    def get_formatted_size(self):
+        """Return human-readable file size"""
+        bytes_size = self.get_file_size()
+        
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if bytes_size < 1024:
+                return f"{bytes_size:.1f} {unit}"
+            bytes_size /= 1024
+        return f"{bytes_size:.1f} GB"
 
 
     def __str__(self):
