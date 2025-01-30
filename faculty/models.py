@@ -133,7 +133,6 @@ class StudyMaterial(models.Model):
 
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
     year = models.ForeignKey(Session, on_delete=models.CASCADE)
     material_type = models.CharField(max_length=20, choices=MATERIAL_TYPES)
     files = CloudinaryField('files',
