@@ -277,22 +277,24 @@ def download_file(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
 
     try:
-        # Fetch Cloudinary resource
-        resource = cloudinary.api.resource(material.files.public_id)
-        url = resource.get('secure_url')
+        # Generate a signed URL
+        url, _ = cloudinary.utils.cloudinary_url(
+            material.files.public_id,
+            resource_type="auto",
+            secure=True,
+            sign_url=True  # Generates a signed URL
+        )
 
         print(f"Downloading file from: {url}")  # Debugging
 
         # Stream file from Cloudinary
         response = requests.get(url, stream=True)
-        
-        # Check if Cloudinary actually returns the file
         if response.status_code != 200:
             print(f"Error: Cloudinary returned status {response.status_code}")
             return HttpResponse("Failed to download file", status=500)
 
         # Get filename
-        original_filename = resource.get('original_filename', f"{material.course.code}_{material.material_type}.pdf")
+        original_filename = material.files.public_id.split("/")[-1] + ".pdf"
 
         # Create HTTP response
         django_response = HttpResponse(response.raw, content_type=response.headers.get('Content-Type', 'application/octet-stream'))
@@ -303,6 +305,7 @@ def download_file(request, pk):
     except Exception as e:
         print(f"Error downloading file: {e}")  # Debugging
         return HttpResponse(f"Failed to download file: {str(e)}", status=500)
+
 
 def download_multiple_files(request, pk):
     """Download all study materials for a specific course and year as a zip"""
@@ -317,11 +320,15 @@ def download_multiple_files(request, pk):
         with ZipFile(zip_buffer, 'w') as zip_file:
             for mat in study_materials:
                 try:
-                    # Fetch Cloudinary resource
-                    resource = cloudinary.api.resource(mat.files.public_id)
-                    url = resource['secure_url']
-                    filename = resource.get('original_filename', f"{mat.course.code}_{mat.material_type}.pdf")
+                    # Generate a signed URL
+                    url, _ = cloudinary.utils.cloudinary_url(
+                        mat.files.public_id,
+                        resource_type="auto",
+                        secure=True,
+                        sign_url=True  # Generates a signed URL
+                    )
 
+                    filename = mat.files.public_id.split("/")[-1] + ".pdf"
                     print(f"Adding file to ZIP: {filename} from {url}")  # Debugging
 
                     # Fetch file content
@@ -350,6 +357,7 @@ def download_multiple_files(request, pk):
     except Exception as e:
         print(f"Failed to create ZIP: {e}")  # Debugging
         return HttpResponse(f"Error creating ZIP: {str(e)}", status=500)
+
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
