@@ -285,25 +285,64 @@ def download_multiple_files(request, pk):
         year=material.year
     )
     
+    if not study_materials.exists():
+        messages.error(request, "No materials found for download.")
+        return redirect('faculty:download_materials')
+    
     # Create a zip file in memory
     zip_buffer = BytesIO()
-    with ZipFile(zip_buffer, 'w') as zip_file:
-        for mat in study_materials:
-            if mat.files:
-                # Download from Cloudinary
-                response = cloudinary.api.resource(mat.files.public_id)
-                file_url = response['secure_url']
-                file_content = requests.get(file_url).content
-                
-                # Add to zip with proper filename
-                filename = os.path.basename(mat.files.public_id)
-                zip_file.writestr(filename, file_content)
-
-    # Prepare the response
-    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-    response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
+    download_errors = []
     
-    return response
+    try:
+        with ZipFile(zip_buffer, 'w') as zip_file:
+            for mat in study_materials:
+                if mat.files:
+                    try:
+                        # Download from Cloudinary with proper error handling
+                        response = cloudinary.api.resource(mat.files.public_id)
+                        file_url = response.get('secure_url')
+                        
+                        if not file_url:
+                            download_errors.append(f"Missing URL for {mat.title}")
+                            continue
+                            
+                        file_response = requests.get(file_url)
+                        if file_response.status_code == 200:
+                            # Add to zip with proper filename
+                            filename = os.path.basename(mat.files.public_id)
+                            zip_file.writestr(filename, file_response.content)
+                        else:
+                            download_errors.append(f"Failed to download {mat.title}")
+                            
+                    except cloudinary.api.NotFound:
+                        # Handle case where file doesn't exist in Cloudinary
+                        download_errors.append(f"File not found in cloud storage: {mat.title}")
+                        # Optionally remove the file reference from database
+                        mat.files = None
+                        mat.save()
+                        
+                    except Exception as e:
+                        download_errors.append(f"Error processing {mat.title}: {str(e)}")
+        
+        if download_errors:
+            # If some files failed but others succeeded, show warning
+            error_message = "Some files couldn't be downloaded: " + "; ".join(download_errors)
+            messages.warning(request, error_message)
+            
+        if zip_buffer.tell() == 0:
+            # No files were successfully added to zip
+            messages.error(request, "No files could be downloaded. Please contact support.")
+            return redirect('faculty:download_study_materials', pk=pk)
+            
+        # Prepare the response
+        zip_buffer.seek(0)
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
+        return response
+        
+    except Exception as e:
+        messages.error(request, f"An error occurred while preparing download: {str(e)}")
+        return redirect('faculty:download_study_materials', pk=pk)
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
