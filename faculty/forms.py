@@ -176,7 +176,7 @@ class StudyMaterialForm(forms.ModelForm):
     )
 
     title = forms.CharField(
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     
