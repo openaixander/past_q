@@ -240,7 +240,6 @@ def process_materials(request):
 
 
 def download_study_materials(request, pk):
-    def download_study_materials(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
     
     # Fetch all study materials and add size information
@@ -273,19 +272,30 @@ def download_file(request, pk):
     
     try:
         # Get the Cloudinary resource
-        response = cloudinary.api.resource(material.files.public_id)
-        file_url = response['secure_url']
+        resource = cloudinary.api.resource(material.files.public_id)
+        file_url = resource['secure_url']
+        original_filename = resource.get('original_filename', f"{material.title}.{resource.get('format', 'pdf')}")
         
-        # Stream the file from Cloudinary
-        file_response = requests.get(file_url)
+        # Stream the file from Cloudinary with timeout
+        file_response = requests.get(file_url, timeout=30)
         
-        # Prepare the response
-        response = HttpResponse(file_response.content, content_type=file_response.headers['Content-Type'])
-        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(material.files.public_id)}"'
-        return response
+        if file_response.status_code == 200 and len(file_response.content) > 0:
+            # Prepare the response
+            response = HttpResponse(
+                file_response.content, 
+                content_type=file_response.headers.get('Content-Type', 'application/octet-stream')
+            )
+            response['Content-Disposition'] = f'attachment; filename="{original_filename}"'
+            return response
+        else:
+            messages.error(request, "Error downloading file. The file might be empty or corrupted.")
+    except requests.Timeout:
+        messages.error(request, "The download timed out. Please try again.")
     except Exception as e:
         print(f"Error downloading file: {str(e)}")
-        raise Http404("File not found")
+        messages.error(request, "An error occurred while downloading the file.")
+    
+    return redirect('faculty:download_study_materials', pk=pk)
 
 # views.py - Updated download function
 def download_multiple_files(request, pk):
