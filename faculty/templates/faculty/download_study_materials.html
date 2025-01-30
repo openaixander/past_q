@@ -192,6 +192,15 @@ Download Study Materials - {{ material.course.name }}
                 {% empty %}
                 <p class="text-center text-muted">No materials available for this course and session.</p>
                 {% endfor %}
+                <div class="download-buttons text-center mt-4">
+                    <a href="{% url 'faculty:download_multiple_files' material.pk %}" 
+                       class="btn btn-custom download-all-btn">
+                        <i class="fas fa-download"></i> Download All Materials
+                    </a>
+                    <a href="{% url 'faculty:download_materials' %}" class="btn btn-custom">
+                        <i class="fas fa-search"></i> Search More Materials
+                    </a>
+                </div>
             </div>
         </div>
     </div>
