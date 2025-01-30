@@ -275,73 +275,81 @@ def download_study_materials(request, pk):
 def download_file(request, pk):
     """Download a single study material file"""
     material = get_object_or_404(StudyMaterial, pk=pk)
-    
+
     try:
-        # Get the Cloudinary resource
+        # Fetch Cloudinary resource
         resource = cloudinary.api.resource(material.files.public_id)
         url = resource.get('secure_url')
 
-        # Get the original filename or create a default one
+        print(f"Downloading file from: {url}")  # Debugging
+
+        # Stream file from Cloudinary
+        response = requests.get(url, stream=True)
+        
+        # Check if Cloudinary actually returns the file
+        if response.status_code != 200:
+            print(f"Error: Cloudinary returned status {response.status_code}")
+            return HttpResponse("Failed to download file", status=500)
+
+        # Get filename
         original_filename = resource.get('original_filename', f"{material.course.code}_{material.material_type}.pdf")
 
-        # Stream the response properly
-        response = requests.get(url, stream=True)
-        response.raise_for_status()  # Raise an error if the request fails
-
-        django_response = HttpResponse(
-            response.raw,
-            content_type=response.headers.get('Content-Type', 'application/octet-stream')
-        )
+        # Create HTTP response
+        django_response = HttpResponse(response.raw, content_type=response.headers.get('Content-Type', 'application/octet-stream'))
         django_response['Content-Disposition'] = f'attachment; filename="{original_filename}"'
 
         return django_response
 
     except Exception as e:
-        messages.error(request, f"Failed to download file: {str(e)}")
-        return redirect('faculty:download_study_materials', pk=material.pk)
+        print(f"Error downloading file: {e}")  # Debugging
+        return HttpResponse(f"Failed to download file: {str(e)}", status=500)
 
 def download_multiple_files(request, pk):
-    """Download all materials for a specific course and year as a zip"""
+    """Download all study materials for a specific course and year as a zip"""
     material = get_object_or_404(StudyMaterial, pk=pk)
     study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
-    
+
     if not study_materials.exists():
-        messages.error(request, "No materials found for download.")
-        return redirect('faculty:download_materials')
+        return HttpResponse("No materials found", status=404)
 
     try:
         zip_buffer = BytesIO()
         with ZipFile(zip_buffer, 'w') as zip_file:
             for mat in study_materials:
                 try:
-                    # Get the Cloudinary resource
+                    # Fetch Cloudinary resource
                     resource = cloudinary.api.resource(mat.files.public_id)
                     url = resource['secure_url']
+                    filename = resource.get('original_filename', f"{mat.course.code}_{mat.material_type}.pdf")
 
-                    # Get original filename or create one
-                    original_filename = resource.get('original_filename', f"{mat.course.code}_{mat.material_type}.pdf")
+                    print(f"Adding file to ZIP: {filename} from {url}")  # Debugging
 
-                    # Download and add to zip
+                    # Fetch file content
                     response = requests.get(url, stream=True)
-                    response.raise_for_status()
-                    zip_file.writestr(original_filename, response.content)
+                    
+                    if response.status_code != 200:
+                        print(f"Error fetching {filename}: Status {response.status_code}")
+                        continue  # Skip this file
+
+                    # Add file to ZIP
+                    zip_file.writestr(filename, response.content)
 
                 except Exception as e:
-                    print(f"Error processing {mat.files.public_id}: {str(e)}")
+                    print(f"Skipping file {mat.files.public_id}: {str(e)}")
                     continue
 
+        # Ensure ZIP isn't empty
         if zip_buffer.tell() == 0:
-            messages.error(request, "Failed to create zip file. No valid files found.")
-            return redirect('faculty:download_study_materials', pk=pk)
+            return HttpResponse("No valid files found for download.", status=500)
 
-        # Create response
+        # Return ZIP file
         response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
         return response
 
     except Exception as e:
-        messages.error(request, f"Failed to create zip file: {str(e)}")
-        return redirect('faculty:download_study_materials', pk=pk)
+        print(f"Failed to create ZIP: {e}")  # Debugging
+        return HttpResponse(f"Error creating ZIP: {str(e)}", status=500)
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
