@@ -240,13 +240,25 @@ def process_materials(request):
 
 
 def download_study_materials(request, pk):
+    def download_study_materials(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
     
-    # Fetch all study materials for the same course and year
+    # Fetch all study materials and add size information
     study_materials = StudyMaterial.objects.filter(
         course=material.course, 
         year=material.year
     )
+    
+    # Add file information to each material
+    for mat in study_materials:
+        mat.formatted_size = mat.get_formatted_size()
+        # Get the original filename from Cloudinary
+        try:
+            resource = cloudinary.api.resource(mat.files.public_id)
+            mat.original_filename = resource.get('original_filename', 'unknown')
+        except Exception as e:
+            print(f"Error getting filename: {str(e)}")
+            mat.original_filename = 'unknown'
 
     context = {
         'material': material,
