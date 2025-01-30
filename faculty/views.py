@@ -297,7 +297,6 @@ def download_file(request, pk):
     
     return redirect('faculty:download_study_materials', pk=pk)
 
-# views.py - Updated download function
 def download_multiple_files(request, pk):
     """Download all materials for a specific course and year as a zip"""
     material = get_object_or_404(StudyMaterial, pk=pk)
@@ -322,19 +321,20 @@ def download_multiple_files(request, pk):
                 if mat.files and mat.files.url:
                     try:
                         # Get the Cloudinary resource details
-                        resource_info = cloudinary.api.resource(mat.files.public_id)
-                        if not resource_info.get('secure_url'):
+                        resource = cloudinary.api.resource(mat.files.public_id)
+                        if not resource.get('secure_url'):
                             download_errors.append(f"No secure URL for {mat.title}")
                             continue
 
-                        # Get the file format from Cloudinary metadata
-                        file_format = resource_info.get('format', '')
-                        original_filename = f"{mat.title}.{file_format}"
+                        # Get original filename or generate one
+                        original_filename = resource.get('original_filename', 
+                                                      f"{mat.title}.{resource.get('format', 'pdf')}")
                         
-                        # Download file content with proper headers
-                        headers = {'User-Agent': 'Mozilla/5.0'}  # Some CDNs require user agent
-                        response = requests.get(resource_info['secure_url'], 
+                        # Download file content with proper headers and timeout
+                        headers = {'User-Agent': 'Mozilla/5.0'}
+                        response = requests.get(resource['secure_url'], 
                                              headers=headers,
+                                             timeout=30,
                                              stream=True)
                         
                         if response.status_code == 200:
@@ -351,11 +351,13 @@ def download_multiple_files(request, pk):
                         else:
                             download_errors.append(f"Failed to download {mat.title}: HTTP {response.status_code}")
                             
+                    except requests.Timeout:
+                        download_errors.append(f"Download timeout for {mat.title}")
                     except cloudinary.api.NotFound:
                         download_errors.append(f"File not found in cloud storage: {mat.title}")
                     except Exception as e:
                         download_errors.append(f"Error processing {mat.title}: {str(e)}")
-                        print(f"Error details for {mat.title}: {str(e)}")  # Detailed logging
+                        print(f"Error details for {mat.title}: {str(e)}")
                 else:
                     download_errors.append(f"Invalid file reference for: {mat.title}")
         
@@ -365,7 +367,7 @@ def download_multiple_files(request, pk):
             return redirect('faculty:download_study_materials', pk=pk)
         
         if download_errors:
-            print("Download errors:", download_errors)  # Log errors for debugging
+            print("Download errors:", download_errors)
             messages.warning(request, "Some files couldn't be downloaded completely. Please try again or contact support.")
         
         # Prepare the response
@@ -375,7 +377,7 @@ def download_multiple_files(request, pk):
         return response
         
     except Exception as e:
-        print(f"Critical error in download_multiple_files: {str(e)}")  # Log critical errors
+        print(f"Critical error in download_multiple_files: {str(e)}")
         messages.error(request, f"An error occurred while preparing download: {str(e)}")
         return redirect('faculty:download_study_materials', pk=pk)
 
