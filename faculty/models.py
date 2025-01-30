@@ -138,7 +138,7 @@ class StudyMaterial(models.Model):
     material_type = models.CharField(max_length=20, choices=MATERIAL_TYPES)
     files = CloudinaryField('files',
                           folder='study_materials/',
-                          resource_type='auto',  # Changed from 'raw' to 'auto'
+                          resource_type='raw',  # Changed from 'raw' to 'auto'
                           allowed_formats=['pdf', 'doc', 'docx', 'ppt', 'pptx'])
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
