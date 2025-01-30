@@ -322,45 +322,6 @@ def download_multiple_files(request, pk):
         with ZipFile(zip_buffer, 'w') as zip_file:
             for mat in study_materials:
                 try:
-                    # Generate a signed URL
-                    url, _ = cloudinary.utils.cloudinary_url(
-                        mat.files.public_id,
-                        resource_type="auto",
-                        secure=True,
-                        sign_url=True  # Generates a signed URL
-                    )
-
-                    filename = mat.files.public_id.split("/")[-1] + ".pdf"
-                    print(f"Adding file to ZIP: {filename} from {url}")  # Debugging
-
-                    # Fetch file content
-                    response = requests.get(url, stream=True)
-                    
-                    if response.status_code != 200:
-                        print(f"Error fetching {filename}: Status {response.status_code}")
-                        continue  # Skip this file
-
-                    # Add file to ZIP
-                    zip_file.writestr(filename, response.content)
-
-                except Exception as e:
-                    print(f"Skipping file {mat.files.public_id}: {str(e)}")
-                    continue
-
-        # Ensure ZIP isn't empty
-        if zip_buffer.teldef download_multiple_files(request, pk):
-    """Download all study materials for a specific course and year as a zip"""
-    material = get_object_or_404(StudyMaterial, pk=pk)
-    study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
-
-    if not study_materials.exists():
-        return HttpResponse("No materials found", status=404)
-
-    try:
-        zip_buffer = BytesIO()
-        with ZipFile(zip_buffer, 'w') as zip_file:
-            for mat in study_materials:
-                try:
                     # Generate correct Cloudinary URL
                     url, _ = cloudinary.utils.cloudinary_url(
                         mat.files.public_id,
@@ -399,6 +360,7 @@ def download_multiple_files(request, pk):
     except Exception as e:
         print(f"Failed to create ZIP: {e}")  # Debugging
         return HttpResponse(f"Error creating ZIP: {str(e)}", status=500)
+
 
 
 
