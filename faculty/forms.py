@@ -175,6 +175,11 @@ class StudyMaterialForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
+    title = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    
     year = forms.ModelChoiceField(
         required=True,
         queryset=Session.objects.all(),
@@ -190,11 +195,6 @@ class StudyMaterialForm(forms.ModelForm):
         choices=StudyMaterial.MATERIAL_TYPES,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-
-    # files = MultipleFileField(
-    #     validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'ppt', 'pptx'])],
-    #     widget=forms.FileInput(attrs={'multiple': True, 'class': 'form-control'})
-    # )
 
     class Meta:
         model = StudyMaterial
