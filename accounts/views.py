@@ -272,20 +272,13 @@ def reset_password_validate(request, uidb64, token):
         messages.error(request, 'Invalid password reset link: User does not exist.')
         return redirect('accounts:forgot_password')
 
-    if user.password_reset_used:
-        messages.warning(request, 'This password reset link has already been used.')
-        return redirect('accounts:forgot_password')
-
     if default_token_generator.check_token(user, token):
         request.session['uid'] = uid
-        user.password_reset_used = True
-        user.save()
         messages.info(request, 'Please reset your password.')
         return redirect('accounts:reset_password')
     else:
         messages.error(request, 'This password reset link is invalid or has expired!')
         return redirect('accounts:forgot_password')
-    
 
 def reset_password(request):
     if request.method == 'POST':
@@ -301,12 +294,10 @@ def reset_password(request):
             return redirect('accounts:reset_password')
 
         try:
-
             uid = request.session.get('uid')
-            #value error: an exception that occurs when a function receives an argument of the correct data type but an inappropriate value.
-            # if user is not in session, then raise a ValueError
+
             if not uid:
-                raise ValueError("User ID not found in session")
+                raise ValueError("Session expired. Please request a new password reset link.")
 
             user = Account.objects.get(pk=uid)
 
@@ -315,20 +306,22 @@ def reset_password(request):
                 messages.error(request, 'New password must be different from the old password.')
                 return redirect('accounts:reset_password')
 
-            # Validate the password using Django's password validation
+            # Validate password using Django’s built-in validation
             try:
                 password_validation.validate_password(password, user)
             except password_validation.ValidationError as e:
                 messages.error(request, '\n'.join(e.messages))
                 return redirect('accounts:reset_password')
 
+            # Set the new password and mark the reset link as used
             user.set_password(password)
-            user.password_reset_used = False
+            user.password_reset_used = True  # Mark link as used
             user.save()
 
+            # Clear session UID after a successful reset
             del request.session['uid']
 
-            messages.success(request, 'Password reset successful. You can now login with your new password.')
+            messages.success(request, 'Password reset successful. You can now log in with your new password.')
             return redirect('accounts:login')
 
         except (Account.DoesNotExist, ValueError) as e:
