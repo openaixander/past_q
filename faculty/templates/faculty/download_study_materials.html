@@ -154,7 +154,7 @@ Download Study Materials - {{ material.course.name }}
 
             <div class="materials-list">
                 <h4 class="mb-3">Available Materials</h4>
-                
+                {% include 'faculty/includes/alerts.html' %}
                 {% for study_material in study_materials %}
                 <div class="material-item">
                     <div class="material-details">
