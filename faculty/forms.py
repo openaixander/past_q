@@ -198,7 +198,7 @@ class StudyMaterialForm(forms.ModelForm):
 
     class Meta:
         model = StudyMaterial
-        fields = ['material_type','year']
+        fields = ['material_type','title','year']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
