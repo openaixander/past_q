@@ -174,15 +174,12 @@ Download Study Materials - {{ material.course.name }}
                                 <span class="file-badge ml-2">{{ study_material.material_type }}</span>
                             </div>
                             <div class="file-info">
-                                <small class="text-muted mr-2">
-                                    {# Cloudinary provides file size information #}
-                                    {{ study_material.files.size|filesizeformat }}
-                                </small>
-                                <small class="text-muted file-name">
-                                    {# Get filename from Cloudinary public_id #}
-                                    {{ study_material.files.public_id|slice:"20:" }}
-                                    {% if study_material.files.public_id|length > 20 %}...{% endif %}
-                                </small>
+                             <small class="text-muted mr-2">
+                                {{ study_material.formatted_size }}
+                            </small>
+                            <small class="text-muted file-name">
+                                {{ study_material.original_filename }}
+                            </small>
                             </div>
                         </div>
                     </div>
