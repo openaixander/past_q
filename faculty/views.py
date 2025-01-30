@@ -277,27 +277,28 @@ def download_file(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
 
     try:
-        # Generate a signed URL
+        # Generate a signed URL with correct resource type
         url, _ = cloudinary.utils.cloudinary_url(
             material.files.public_id,
-            resource_type="auto",
+            resource_type="raw",  # Ensure correct type
             secure=True,
-            sign_url=True  # Generates a signed URL
+            sign_url=True
         )
 
         print(f"Downloading file from: {url}")  # Debugging
 
-        # Stream file from Cloudinary
+        # Fetch file from Cloudinary
         response = requests.get(url, stream=True)
         if response.status_code != 200:
             print(f"Error: Cloudinary returned status {response.status_code}")
             return HttpResponse("Failed to download file", status=500)
 
-        # Get filename
-        original_filename = material.files.public_id.split("/")[-1] + ".pdf"
+        # Extract filename and add extension if missing
+        original_filename = material.files.public_id.split("/")[-1]
+        if not original_filename.endswith(('.pdf', '.docx', '.pptx')):  
+            original_filename += '.pdf'  # Default extension
 
-        # Create HTTP response
-        django_response = HttpResponse(response.raw, content_type=response.headers.get('Content-Type', 'application/octet-stream'))
+        django_response = HttpResponse(response.raw, content_type="application/octet-stream")
         django_response['Content-Disposition'] = f'attachment; filename="{original_filename}"'
 
         return django_response
@@ -305,6 +306,7 @@ def download_file(request, pk):
     except Exception as e:
         print(f"Error downloading file: {e}")  # Debugging
         return HttpResponse(f"Failed to download file: {str(e)}", status=500)
+
 
 
 def download_multiple_files(request, pk):
@@ -346,17 +348,58 @@ def download_multiple_files(request, pk):
                     continue
 
         # Ensure ZIP isn't empty
+        if zip_buffer.teldef download_multiple_files(request, pk):
+    """Download all study materials for a specific course and year as a zip"""
+    material = get_object_or_404(StudyMaterial, pk=pk)
+    study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
+
+    if not study_materials.exists():
+        return HttpResponse("No materials found", status=404)
+
+    try:
+        zip_buffer = BytesIO()
+        with ZipFile(zip_buffer, 'w') as zip_file:
+            for mat in study_materials:
+                try:
+                    # Generate correct Cloudinary URL
+                    url, _ = cloudinary.utils.cloudinary_url(
+                        mat.files.public_id,
+                        resource_type="raw",  # Ensure it's a document, not an image
+                        secure=True,
+                        sign_url=True
+                    )
+
+                    filename = mat.files.public_id.split("/")[-1]
+                    if not filename.endswith(('.pdf', '.docx', '.pptx')):
+                        filename += '.pdf'  # Default to PDF if unknown
+
+                    print(f"Adding file to ZIP: {filename} from {url}")  # Debugging
+
+                    # Fetch file
+                    response = requests.get(url, stream=True)
+                    if response.status_code != 200:
+                        print(f"Error fetching {filename}: Status {response.status_code}")
+                        continue  # Skip if file fails
+
+                    # Write file to ZIP
+                    zip_file.writestr(filename, response.content)
+
+                except Exception as e:
+                    print(f"Skipping file {mat.files.public_id}: {str(e)}")
+                    continue
+
+        # Ensure ZIP isn't empty
         if zip_buffer.tell() == 0:
             return HttpResponse("No valid files found for download.", status=500)
 
-        # Return ZIP file
-        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
         response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
         return response
 
     except Exception as e:
         print(f"Failed to create ZIP: {e}")  # Debugging
         return HttpResponse(f"Error creating ZIP: {str(e)}", status=500)
+
 
 
 def no_download_materials_found(request):
