@@ -160,33 +160,33 @@ Download Study Materials - {{ material.course.name }}
                     <div class="material-details">
                         <div class="material-info">
                             <div>
-                                <strong>
-                                    {% if study_materials|length > 1 %}
-                                        {% if forloop.first %}
-                                            {{ study_material.get_material_type_display }}
-                                        {% else %}
-                                            {{ study_material.get_material_type_display }} {{ forloop.counter }}
-                                        {% endif %}
-                                    {% else %}
-                                        {{ study_material.get_material_type_display }}
-                                    {% endif %}
-                                </strong>
+                                <strong>{{ study_material.get_material_type_display }}</strong>
                                 <span class="file-badge ml-2">{{ study_material.material_type }}</span>
                             </div>
                             <div class="file-info">
-                             <small class="text-muted mr-2">
-                                {{ study_material.formatted_size }}
-                            </small>
-                            <small class="text-muted file-name">
-                                {{ study_material.original_filename }}
-                            </small>
+                                <small class="text-muted mr-2">
+                                    {{ study_material.formatted_size }}
+                                </small>
+                                <small class="text-muted file-name">
+                                    {{ study_material.original_filename|default:"File" }}
+                                </small>
                             </div>
                         </div>
                     </div>
                     <a href="{% url 'faculty:download_file' study_material.pk %}" 
-                       class="btn btn-sm btn-custom" 
-                       download>
+                       class="btn btn-sm btn-custom download-btn"
+                       data-material-id="{{ study_material.pk }}">
                         <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+                
+                <div class="download-buttons text-center mt-4">
+                    <a href="{% url 'faculty:download_multiple_files' material.pk %}" 
+                       class="btn btn-custom download-all-btn">
+                        <i class="fas fa-download"></i> Download All Materials
+                    </a>
+                    <a href="{% url 'faculty:download_materials' %}" class="btn btn-custom">
+                        <i class="fas fa-search"></i> Search More Materials
                     </a>
                 </div>
                 {% empty %}
@@ -208,4 +208,80 @@ Download Study Materials - {{ material.course.name }}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Single file download
+    document.querySelectorAll('.download-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.href;
+            const originalText = this.innerHTML;
+            
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+            this.disabled = true;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Download failed');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = '';  // Let the server decide filename
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert('Download failed. Please try again.');
+                })
+                .finally(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+        });
+    });
+
+    // Multiple files download
+    const downloadAllBtn = document.querySelector('.download-all-btn');
+    if (downloadAllBtn) {
+        downloadAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.href;
+            const originalText = this.innerHTML;
+            
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing Download...';
+            this.disabled = true;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Download failed');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = '';  // Let the server decide filename
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert('Download failed. Please try again.');
+                })
+                .finally(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+        });
+    }
+});
+</script>
 {% endblock content %}
