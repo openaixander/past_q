@@ -343,6 +343,10 @@ def download_multiple_files(request, pk):
     except Exception as e:
         messages.error(request, f"An error occurred while preparing download: {str(e)}")
         return redirect('faculty:download_study_materials', pk=pk)
+        
+    except Exception as e:
+        messages.error(request, f"An error occurred while preparing download: {str(e)}")
+        return redirect('faculty:download_study_materials', pk=pk)
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
