@@ -279,31 +279,21 @@ def download_file(request, pk):
     try:
         # Get the Cloudinary resource
         resource = cloudinary.api.resource(material.files.public_id)
-        
-        # Get the secure URL for the file
-        url = resource['secure_url']
-        
-        # Get original filename or create a default one
-        original_filename = resource.get('original_filename')
-        if not original_filename:
-            extension = resource.get('format', 'pdf')
-            original_filename = f"{material.course.code}_{material.material_type}.{extension}"
+        url = resource.get('secure_url')
 
-        # Stream the response in chunks
+        # Get the original filename or create a default one
+        original_filename = resource.get('original_filename', f"{material.course.code}_{material.material_type}.pdf")
+
+        # Stream the response properly
         response = requests.get(url, stream=True)
-        response.raise_for_status()  # Raise an exception for bad status codes
-        
-        # Create the Django response object
+        response.raise_for_status()  # Raise an error if the request fails
+
         django_response = HttpResponse(
+            response.raw,
             content_type=response.headers.get('Content-Type', 'application/octet-stream')
         )
         django_response['Content-Disposition'] = f'attachment; filename="{original_filename}"'
-        
-        # Stream the file in chunks to avoid memory issues
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                django_response.write(chunk)
-        
+
         return django_response
 
     except Exception as e:
@@ -313,17 +303,13 @@ def download_file(request, pk):
 def download_multiple_files(request, pk):
     """Download all materials for a specific course and year as a zip"""
     material = get_object_or_404(StudyMaterial, pk=pk)
-    study_materials = StudyMaterial.objects.filter(
-        course=material.course, 
-        year=material.year
-    )
+    study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
     
     if not study_materials.exists():
         messages.error(request, "No materials found for download.")
         return redirect('faculty:download_materials')
 
     try:
-        # Create a zip file in memory
         zip_buffer = BytesIO()
         with ZipFile(zip_buffer, 'w') as zip_file:
             for mat in study_materials:
@@ -331,26 +317,19 @@ def download_multiple_files(request, pk):
                     # Get the Cloudinary resource
                     resource = cloudinary.api.resource(mat.files.public_id)
                     url = resource['secure_url']
-                    
+
                     # Get original filename or create one
-                    original_filename = resource.get('original_filename')
-                    if not original_filename:
-                        extension = resource.get('format', 'pdf')
-                        original_filename = f"{mat.course.code}_{mat.material_type}.{extension}"
-                    
+                    original_filename = resource.get('original_filename', f"{mat.course.code}_{mat.material_type}.pdf")
+
                     # Download and add to zip
-                    response = requests.get(url)
+                    response = requests.get(url, stream=True)
                     response.raise_for_status()
-                    
-                    # Sanitize filename
-                    safe_filename = "".join(c for c in original_filename if c.isalnum() or c in "._- ")
-                    zip_file.writestr(safe_filename, response.content)
-                    
+                    zip_file.writestr(original_filename, response.content)
+
                 except Exception as e:
                     print(f"Error processing {mat.files.public_id}: {str(e)}")
                     continue
 
-        # Check if any files were added
         if zip_buffer.tell() == 0:
             messages.error(request, "Failed to create zip file. No valid files found.")
             return redirect('faculty:download_study_materials', pk=pk)
@@ -363,7 +342,7 @@ def download_multiple_files(request, pk):
     except Exception as e:
         messages.error(request, f"Failed to create zip file: {str(e)}")
         return redirect('faculty:download_study_materials', pk=pk)
-        
+
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
 
