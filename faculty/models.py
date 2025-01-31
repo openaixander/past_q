@@ -144,59 +144,41 @@ class StudyMaterial(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
 
 
-    def get_material_display_name(self, total_materials=1):
-        """
-        Generate a display name for the study material.
-        
-        Args:
-            total_materials (int): Total number of materials of the same type.
-        
-        Returns:
-            str: A descriptive name for the material.
-        """
-        # Get the human-readable material type
-        material_type_display = self.get_material_type_display()
-        
-        # If there are multiple materials of the same type, add a number
-        if total_materials > 1:
-            # Get the index of this material among materials of the same type
-            materials_of_same_type = self.course.studymaterial_set.filter(
-                year=self.year, 
-                material_type=self.material_type
-            ).order_by('uploaded_at')
-            
-            # Find the index (1-based)
-            index = list(materials_of_same_type).index(self) + 1
-            
-            # If it's not the first material of this type, add a number
-            if index > 1:
-                return f"{material_type_display} {index}"
-        
-        return material_type_display
-        
-    def get_file_size(self):
-        """Get the file size from Cloudinary"""
+    def get_file_info(self):
+    """Get comprehensive file information from Cloudinary"""
         try:
             if self.files:
-                import cloudinary.api
                 resource = cloudinary.api.resource(self.files.public_id)
-                bytes_size = resource.get('bytes', 0)
-                return bytes_size
-            return 0
+                return {
+                    'size': resource.get('bytes', 0),
+                    'format': resource.get('format', ''),
+                    'original_filename': resource.get('original_filename', ''),
+                    'secure_url': resource.get('secure_url', ''),
+                    'created_at': resource.get('created_at', '')
+                }
+            return None
         except Exception as e:
-            print(f"Error getting file size: {str(e)}")
-            return 0
-    
+            print(f"Error getting file info: {str(e)}")
+            return None
+
     def get_formatted_size(self):
         """Return human-readable file size"""
-        bytes_size = self.get_file_size()
-        
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if bytes_size < 1024:
-                return f"{bytes_size:.1f} {unit}"
-            bytes_size /= 1024
-        return f"{bytes_size:.1f} GB"
-
+        file_info = self.get_file_info()
+        if file_info and 'size' in file_info:
+            bytes_size = file_info['size']
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if bytes_size < 1024:
+                    return f"{bytes_size:.1f} {unit}"
+                bytes_size /= 1024
+            return f"{bytes_size:.1f} GB"
+        return "Size unknown"
+    
+    def get_original_filename(self):
+        """Get the original filename"""
+        file_info = self.get_file_info()
+        if file_info and 'original_filename' in file_info:
+            return file_info['original_filename']
+        return "Unnamed file"
 
     def __str__(self):
         return f"{self.title} - {self.course}"
