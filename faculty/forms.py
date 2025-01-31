@@ -91,7 +91,7 @@ class PastQuestionForm(forms.ModelForm):
     # )
 
     images = MultipleFileField(
-        required=False,
+        required=True,
         validators=[
             FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])
         ]
@@ -150,6 +150,21 @@ class PastQuestionForm(forms.ModelForm):
     
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_file_clean(d, initial) for d in data]
+        return single_file_clean(data, initial)
+
+
 class StudyMaterialForm(forms.ModelForm):
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(),
@@ -196,9 +211,17 @@ class StudyMaterialForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
+    files = MultipleFileField(
+        required=True,
+        widget=MultipleFileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.ppt,.pptx'
+        })
+    )
+
     class Meta:
         model = StudyMaterial
-        fields = ['material_type','title','year']
+        fields = ['material_type','title','year', 'files']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
