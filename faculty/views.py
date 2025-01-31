@@ -11,8 +11,8 @@ from .models import StudentDashboardCard, LecturerDashboardCard, Department, Lev
 from .forms import PastQuestionForm, StudyMaterialForm
 
 import os
-import cloudinary.uploader
 import cloudinary
+import cloudinary.uploader
 import cloudinary.api
 import cloudinary.utils
 from django.conf import settings
@@ -256,14 +256,29 @@ def download_study_materials(request, pk):
     
     # Add file information to each material
     for mat in study_materials:
-        mat.formatted_size = mat.get_formatted_size()
-        # Get the original filename from Cloudinary
         try:
-            resource = cloudinary.api.resource(mat.files.public_id)
-            mat.original_filename = resource.get('original_filename', 'unknown')
+            mat.formatted_size = mat.get_formatted_size()
+            # Get the original filename from Cloudinary
+            if mat.files and mat.files.public_id:
+                try:
+                    # Specify resource_type as 'raw' for non-image files
+                    resource = cloudinary.api.resource(
+                        mat.files.public_id,
+                        resource_type='raw'
+                    )
+                    mat.original_filename = resource.get('original_filename', 'unknown')
+                except cloudinary.api.NotFound:
+                    print(f"File not found in Cloudinary: {mat.files.public_id}")
+                    mat.original_filename = 'File not available'
+                except Exception as e:
+                    print(f"Error getting filename: {str(e)}")
+                    mat.original_filename = 'Filename unavailable'
+            else:
+                mat.original_filename = 'No file attached'
         except Exception as e:
-            print(f"Error getting filename: {str(e)}")
-            mat.original_filename = 'unknown'
+            print(f"Error processing material {mat.id}: {str(e)}")
+            mat.formatted_size = 'Size unavailable'
+            mat.original_filename = 'File information unavailable'
 
     context = {
         'material': material,
@@ -277,23 +292,30 @@ def download_file(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
     
     try:
+        if not material.files or not material.files.public_id:
+            raise Http404("No file available")
+
         # Get FULL public_id with folder path from CloudinaryField
         full_public_id = material.files.public_id
         
         # Force raw resource type and get download URL
-        url = cloudinary.utils.cloudinary_url(
-            full_public_id,
-            resource_type='raw',
-            attachment=True,
-            flags='attachment:pretty_extension'
-        )[0]
-        
-        # Redirect directly to Cloudinary's download URL
-        return redirect(url)
-        
+        try:
+            url = cloudinary.utils.cloudinary_url(
+                full_public_id,
+                resource_type='raw',
+                attachment=True,
+                flags='attachment:pretty_extension'
+            )[0]
+            
+            # Redirect directly to Cloudinary's download URL
+            return redirect(url)
+        except cloudinary.api.NotFound:
+            raise Http404("File not found in cloud storage")
+            
     except Exception as e:
         print(f"Download error: {str(e)}")
-        raise Http404("File not found")
+        messages.error(request, "Unable to download file. Please try again later.")
+        return redirect('faculty:download_materials')
 
 
 def download_multiple_files(request, pk):
