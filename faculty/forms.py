@@ -213,15 +213,15 @@ class StudyMaterialForm(forms.ModelForm):
 
     files = MultipleFileField(
         required=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'ppt', 'pptx'])],
         widget=MultipleFileInput(attrs={
             'class': 'form-control',
             'accept': '.pdf,.doc,.docx,.ppt,.pptx'
         })
     )
-
     class Meta:
         model = StudyMaterial
-        fields = ['material_type','title','year', 'files']
+        fields = ['material_type','title','year']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
