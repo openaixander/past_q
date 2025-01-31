@@ -403,11 +403,10 @@ def upload_study_material(request):
                         course=form.cleaned_data['course'],
                         material_type=form.cleaned_data['material_type'],
                         year=form.cleaned_data['year'],
-                        title=form.cleaned_data['title'],
-                        files=file
                     )
-                    
-                    # Save to Cloudinary
+                    # Assign the individual file
+                    study_material.files = file
+                    # Save the instance
                     study_material.save()
                 
                 messages.success(request, f'{len(files)} study material(s) uploaded successfully!')
@@ -428,6 +427,7 @@ def upload_study_material(request):
         'levels': Level.objects.all(),
         'semesters': Semester.objects.all(),
     }
+    return render(request, 'faculty/upload_study_materials.html', context)
     return render(request, 'faculty/upload_study_materials.html', context)
 
 
