@@ -143,6 +143,36 @@ class StudyMaterial(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
+    def get_material_display_name(self, total_materials=1):
+        """
+        Generate a display name for the study material.
+        
+        Args:
+            total_materials (int): Total number of materials of the same type.
+        
+        Returns:
+            str: A descriptive name for the material.
+        """
+        # Get the human-readable material type
+        material_type_display = self.get_material_type_display()
+        
+        # If there are multiple materials of the same type, add a number
+        if total_materials > 1:
+            # Get the index of this material among materials of the same type
+            materials_of_same_type = self.course.studymaterial_set.filter(
+                year=self.year, 
+                material_type=self.material_type
+            ).order_by('uploaded_at')
+            
+            # Find the index (1-based)
+            index = list(materials_of_same_type).index(self) + 1
+            
+            # If it's not the first material of this type, add a number
+            if index > 1:
+                return f"{material_type_display} {index}"
+        
+        return material_type_display
+
 
     def get_file_info(self):
     """Get comprehensive file information from Cloudinary"""
