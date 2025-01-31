@@ -132,10 +132,11 @@
 
             <div class="mb-3">
                 <label for="files" class="form-label">Upload Study Material Files</label>
-                <input type="file" name="files" id="files" multiple 
-                       accept=".pdf,.doc,.docx,.ppt,.pptx" 
-                       class="form-control">
+                {{ form.files }}
                 <small class="text-muted">Allowed file types: PDF, DOC, DOCX, PPT, PPTX (Multiple files allowed)</small>
+                {% if form.files.errors %}
+                <div class="text-danger">{{ form.files.errors }}</div>
+                {% endif %}
             </div>
 
             <div class="text-center">
