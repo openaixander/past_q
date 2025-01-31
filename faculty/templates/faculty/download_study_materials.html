@@ -159,18 +159,21 @@ Download Study Materials - {{ material.course.name }}
                 <div class="material-item">
                     <div class="material-details">
                         <div class="material-info">
-                            <div>
-                                <strong>{{ study_material.get_material_type_display }}</strong>
-                                <span class="file-badge ml-2">{{ study_material.material_type }}</span>
-                            </div>
-                            <div class="file-info">
-                                <small class="text-muted mr-2">
-                                    {{ study_material.formatted_size }}
-                                </small>
-                                <small class="text-muted file-name">
-                                    {{ study_material.original_filename|default:"File" }}
-                                </small>
-                            </div>
+                            <small class="text-muted mr-2">
+                                {# Safe file size fallback #}
+                                {% if study_material.files %}
+                                    {{ study_material.files.size|filesizeformat }}
+                                {% else %}
+                                    File size unavailable
+                                {% endif %}
+                            </small>
+                            <small class="text-muted file-name">
+                                {# Safe filename display #}
+                                {{ study_material.title|truncatechars:20 }}
+                                {% if study_material.files %}
+                                    .{{ study_material.files.format }}
+                                {% endif %}
+                            </small>
                         </div>
                     </div>
                     <a href="{% url 'faculty:download_file' study_material.pk %}" 
