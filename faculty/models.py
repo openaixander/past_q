@@ -175,7 +175,7 @@ class StudyMaterial(models.Model):
 
 
     def get_file_info(self):
-    """Get comprehensive file information from Cloudinary"""
+        """Get comprehensive file information from Cloudinary"""
         try:
             if self.files:
                 resource = cloudinary.api.resource(self.files.public_id)
