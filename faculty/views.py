@@ -277,61 +277,54 @@ def download_file(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
     
     try:
-        # Get the Cloudinary resource with resource_type='raw'
-        response = cloudinary.api.resource(material.files.public_id, resource_type='raw')
-        file_url = response['secure_url']
+        # Get FULL public_id with folder path from CloudinaryField
+        full_public_id = material.files.public_id
         
-        # Stream the file from Cloudinary
-        file_response = requests.get(file_url)
+        # Force raw resource type and get download URL
+        url = cloudinary.utils.cloudinary_url(
+            full_public_id,
+            resource_type='raw',
+            attachment=True,
+            flags='attachment:pretty_extension'
+        )[0]
         
-        # Extract the file extension from the response
-        file_extension = response.get('format', '')
-        filename = f"{os.path.basename(material.files.public_id)}.{file_extension}"
+        # Redirect directly to Cloudinary's download URL
+        return redirect(url)
         
-        # Prepare the response
-        response = HttpResponse(file_response.content, content_type=file_response.headers['Content-Type'])
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
     except Exception as e:
-        print(f"Error downloading file: {str(e)}")
+        print(f"Download error: {str(e)}")
         raise Http404("File not found")
 
 
 def download_multiple_files(request, pk):
-    """Download all materials for a specific course and year as a zip"""
+    """Download all materials as zip without Cloudinary API calls"""
     material = get_object_or_404(StudyMaterial, pk=pk)
+    study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
     
-    # Get all materials for this course and year
-    study_materials = StudyMaterial.objects.filter(
-        course=material.course, 
-        year=material.year
-    )
-    
-    # Create a zip file in memory
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, 'w') as zip_file:
         for mat in study_materials:
             if mat.files:
                 try:
-                    # Fetch the Cloudinary resource with resource_type='raw'
-                    resource = cloudinary.api.resource(mat.files.public_id, resource_type='raw')
-                    file_url = resource['secure_url']
-                    file_content = requests.get(file_url).content
+                    # Generate direct download URL
+                    url = cloudinary.utils.cloudinary_url(
+                        mat.files.public_id,
+                        resource_type='raw',
+                        attachment=True,
+                        flags='attachment:pretty_extension'
+                    )[0]
                     
-                    # Get the file extension from Cloudinary's response
-                    file_extension = resource.get('format', '')
-                    filename = f"{os.path.basename(mat.files.public_id)}.{file_extension}"
+                    # Get filename from URL
+                    filename = url.split('/')[-1].split('?')[0]
+                    file_content = requests.get(url).content
                     
-                    # Add to zip with proper filename and extension
                     zip_file.writestr(filename, file_content)
                 except Exception as e:
-                    print(f"Error processing file {mat.files.public_id}: {str(e)}")
-                    continue  # Skip this file and continue with others
+                    print(f"Skipping {mat.files.public_id}: {str(e)}")
+                    continue
 
-    # Prepare the response
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
-    
     return response
 
 
