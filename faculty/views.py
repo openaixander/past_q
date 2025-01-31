@@ -351,45 +351,19 @@ def lecturer_dashboard(request):
 
 
 @approved_lecturer_required
-@approved_lecturer_required
-def upload_study_material(request):
+def upload_pastq(request):
     if request.method == 'POST':
-        form = StudyMaterialForm(request.POST, request.FILES)
+        form = PastQuestionForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                # Get the files from the request
-                files = request.FILES.getlist('files')
-                
-                for file in files:
-                    # Create a new StudyMaterial instance for each file
-                    study_material = StudyMaterial(
-                        course=form.cleaned_data['course'],
-                        material_type=form.cleaned_data['material_type'],
-                        year=form.cleaned_data['year'],
-                        files=file
-                    )
-                    
-                    # Save to Cloudinary
-                    study_material.save()
-                
-                messages.success(request, f'{len(files)} study material(s) uploaded successfully!')
-                return redirect('faculty:lecturer_dashboard')
-                
-            except Exception as e:
-                print(f"Upload error: {str(e)}")
-                messages.error(request, 'Error uploading files. Please try again.')
+            form.save()
+            messages.success(request, 'Past questions uploaded successfully!')
+            return redirect('faculty:lecturer_dashboard')
         else:
+            # Print form errors for debugging
             print("Form errors:", form.errors)
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Error uploading files. Please check the form.')
     else:
-        form = StudyMaterialForm()
-
-    context = {
-        'form': form,
-        'departments': Department.objects.all(),
-        'levels': Level.objects.all(),
-        'semesters': Semester.objects.all(),
-    }
+        form = PastQuestionForm()
 
     return render(request, 'faculty/upload_pastq.html', {'form': form})
 
@@ -417,61 +391,34 @@ def load_courses(request):
 @approved_lecturer_required
 def upload_study_material(request):
     if request.method == 'POST':
-        # Create a form without the files field
-        form = StudyMaterialForm(request.POST)
-        
-        # Manually validate the form (excluding files)
+        form = StudyMaterialForm(request.POST, request.FILES)
         if form.is_valid():
-            department_id = request.POST.get('department')
-            level_id = request.POST.get('level')
-            semester_id = request.POST.get('semester')
-            course_id = request.POST.get('course')
-            
             try:
-                course = Course.objects.get(
-                    id=course_id,
-                    departments__id=department_id,
-                    levels__id=level_id,
-                    semesters__id=semester_id
-                )
-                
-                # Manually get files
+                # Get the files from the request
                 files = request.FILES.getlist('files')
                 
-                # Validate file types manually
-                valid_extensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx']
-                valid_files = []
-                
                 for file in files:
-                    ext = file.name.split('.')[-1].lower()
-                    if ext in valid_extensions:
-                        valid_files.append(file)
-                    else:
-                        messages.error(request, f'Invalid file type for {file.name}')
-                
-                # Create StudyMaterial instances for valid files
-                study_materials = []
-                for uploaded_file in valid_files:
-                    study_material = StudyMaterial.objects.create(
-                        course=course,
+                    # Create a new StudyMaterial instance for each file
+                    study_material = StudyMaterial(
+                        course=form.cleaned_data['course'],
                         material_type=form.cleaned_data['material_type'],
                         year=form.cleaned_data['year'],
-                        files=uploaded_file,
+                        title=form.cleaned_data['title'],
+                        files=file
                     )
-                    study_materials.append(study_material)
+                    
+                    # Save to Cloudinary
+                    study_material.save()
                 
-                if study_materials:
-                    messages.success(request, f'{len(study_materials)} study material(s) uploaded successfully!')
-                    return redirect('faculty:lecturer_dashboard')
-                else:
-                    messages.error(request, 'No valid files were uploaded.')
-            
-            except Course.DoesNotExist:
-                messages.error(request, 'Selected course does not exist.')
+                messages.success(request, f'{len(files)} study material(s) uploaded successfully!')
+                return redirect('faculty:lecturer_dashboard')
+                
+            except Exception as e:
+                print(f"Upload error: {str(e)}")
+                messages.error(request, 'Error uploading files. Please try again.')
         else:
-            # Print form errors for debugging
-            print(form.errors)
-    
+            print("Form errors:", form.errors)
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = StudyMaterialForm()
 
