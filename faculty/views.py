@@ -351,19 +351,45 @@ def lecturer_dashboard(request):
 
 
 @approved_lecturer_required
-def upload_pastq(request):
+@approved_lecturer_required
+def upload_study_material(request):
     if request.method == 'POST':
-        form = PastQuestionForm(request.POST, request.FILES)
+        form = StudyMaterialForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Past questions uploaded successfully!')
-            return redirect('faculty:lecturer_dashboard')
+            try:
+                # Get the files from the request
+                files = request.FILES.getlist('files')
+                
+                for file in files:
+                    # Create a new StudyMaterial instance for each file
+                    study_material = StudyMaterial(
+                        course=form.cleaned_data['course'],
+                        material_type=form.cleaned_data['material_type'],
+                        year=form.cleaned_data['year'],
+                        files=file
+                    )
+                    
+                    # Save to Cloudinary
+                    study_material.save()
+                
+                messages.success(request, f'{len(files)} study material(s) uploaded successfully!')
+                return redirect('faculty:lecturer_dashboard')
+                
+            except Exception as e:
+                print(f"Upload error: {str(e)}")
+                messages.error(request, 'Error uploading files. Please try again.')
         else:
-            # Print form errors for debugging
             print("Form errors:", form.errors)
-            messages.error(request, 'Error uploading files. Please check the form.')
+            messages.error(request, 'Please correct the errors below.')
     else:
-        form = PastQuestionForm()
+        form = StudyMaterialForm()
+
+    context = {
+        'form': form,
+        'departments': Department.objects.all(),
+        'levels': Level.objects.all(),
+        'semesters': Semester.objects.all(),
+    }
 
     return render(request, 'faculty/upload_pastq.html', {'form': form})
 
