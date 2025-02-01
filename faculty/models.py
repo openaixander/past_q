@@ -193,19 +193,27 @@ class StudyMaterial(models.Model):
 
     def get_file_size(self):
         """Get the file size from local storage"""
-        if self.files and hasattr(self.files, 'size'):
-            return self.files.size
-        return 0
+        try:
+            if self.files and hasattr(self.files, 'size'):
+                return self.files.size
+            return 0
+        except Exception:
+            return 0
     
     def get_formatted_size(self):
         """Return human-readable file size"""
-        bytes_size = self.get_file_size()
-        
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if bytes_size < 1024:
-                return f"{bytes_size:.1f} {unit}"
-            bytes_size /= 1024
-        return f"{bytes_size:.1f} GB"
+        try:
+            bytes_size = self.get_file_size()
+            if bytes_size == 0:
+                return "0 B"
+                
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if bytes_size < 1024.0:
+                    return f"{bytes_size:.1f} {unit}"
+                bytes_size /= 1024.0
+            return f"{bytes_size:.1f} GB"
+        except Exception:
+            return "Size unavailable"
 
     def __str__(self):
         return f"{self.title} - {self.course}"
