@@ -248,37 +248,29 @@ def process_materials(request):
 def download_study_materials(request, pk):
     material = get_object_or_404(StudyMaterial, pk=pk)
     
-    # Fetch all study materials and add size information
+    # Fetch all study materials for the same course and year
     study_materials = StudyMaterial.objects.filter(
         course=material.course, 
         year=material.year
-    )
+    ).order_by('-uploaded_at')
     
     # Add file information to each material
     for mat in study_materials:
-        try:
-            mat.formatted_size = mat.get_formatted_size()
-            # Get the original filename from Cloudinary
-            if mat.files and mat.files.public_id:
-                try:
-                    # Specify resource_type as 'raw' for non-image files
-                    resource = cloudinary.api.resource(
-                        mat.files.public_id,
-                        resource_type='raw'
-                    )
-                    mat.original_filename = resource.get('original_filename', 'unknown')
-                except cloudinary.api.NotFound:
-                    print(f"File not found in Cloudinary: {mat.files.public_id}")
-                    mat.original_filename = 'File not available'
-                except Exception as e:
-                    print(f"Error getting filename: {str(e)}")
-                    mat.original_filename = 'Filename unavailable'
-            else:
-                mat.original_filename = 'No file attached'
-        except Exception as e:
-            print(f"Error processing material {mat.id}: {str(e)}")
-            mat.formatted_size = 'Size unavailable'
-            mat.original_filename = 'File information unavailable'
+        # Get file size
+        mat.formatted_size = mat.get_formatted_size()
+        
+        # Get file format/extension
+        if mat.files:
+            mat.format = mat.files.name.split('.')[-1].lower()
+            # Get original filename without path
+            mat.original_filename = mat.files.name.split('/')[-1]
+        else:
+            mat.format = 'unknown'
+            mat.original_filename = 'unknown'
+
+        # Set title (use the material type if title is blank)
+        if not mat.title:
+            mat.title = mat.get_material_type_display()
 
     context = {
         'material': material,
@@ -291,26 +283,13 @@ def download_file(request, pk):
     """Download a single study material file"""
     material = get_object_or_404(StudyMaterial, pk=pk)
     
-    try:
-        if not material.files or not material.files.public_id:
-            raise Http404("No file available")
-
-        # Get FULL public_id with folder path from CloudinaryField
-        full_public_id = material.files.public_id
-        
-        # Force raw resource type and get download URL
-        try:
-            url = cloudinary.utils.cloudinary_url(
-                full_public_id,
-                resource_type='raw',
-                attachment=True,
-                flags='attachment:pretty_extension'
-            )[0]
-            
-            # Redirect directly to Cloudinary's download URL
-            return redirect(url)
-        except cloudinary.api.NotFound:
-            raise Http404("File not found in cloud storage")
+    if not material.files:
+        raise Http404("File not found")
+    
+    response = FileResponse(material.files.open('rb'))
+    response['Content-Type'] = 'application/octet-stream'
+    response['Content-Disposition'] = f'attachment; filename="{material.files.name.split("/")[-1]}"'
+    return response
             
     except Exception as e:
         print(f"Download error: {str(e)}")
@@ -319,7 +298,7 @@ def download_file(request, pk):
 
 
 def download_multiple_files(request, pk):
-    """Download all materials as zip without Cloudinary API calls"""
+    """Download all materials as zip"""
     material = get_object_or_404(StudyMaterial, pk=pk)
     study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
     
@@ -328,21 +307,10 @@ def download_multiple_files(request, pk):
         for mat in study_materials:
             if mat.files:
                 try:
-                    # Generate direct download URL
-                    url = cloudinary.utils.cloudinary_url(
-                        mat.files.public_id,
-                        resource_type='raw',
-                        attachment=True,
-                        flags='attachment:pretty_extension'
-                    )[0]
-                    
-                    # Get filename from URL
-                    filename = url.split('/')[-1].split('?')[0]
-                    file_content = requests.get(url).content
-                    
-                    zip_file.writestr(filename, file_content)
+                    file_name = mat.files.name.split('/')[-1]
+                    zip_file.writestr(file_name, mat.files.read())
                 except Exception as e:
-                    print(f"Skipping {mat.files.public_id}: {str(e)}")
+                    print(f"Skipping {mat.files.name}: {str(e)}")
                     continue
 
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
