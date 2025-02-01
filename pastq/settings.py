@@ -193,4 +193,5 @@ cloudinary.config(
 )
 
 # Configure media files to use Cloudinary
+# If you're using Cloudinary as default file storage
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
