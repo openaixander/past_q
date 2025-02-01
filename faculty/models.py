@@ -136,10 +136,10 @@ class StudyMaterial(models.Model):
     year = models.ForeignKey(Session, on_delete=models.CASCADE)
     title = models.CharField(max_length=200,blank=True)
     material_type = models.CharField(max_length=20, choices=MATERIAL_TYPES)
-    files = CloudinaryField('files',
-                          folder='study_materials/',
-                          resource_type='raw',  # Changed from 'raw' to 'auto'
-                          allowed_formats=['pdf', 'doc', 'docx', 'ppt', 'pptx'])
+    files = models.FileField(
+        upload_to='study_materials/',
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'ppt', 'pptx'])]
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
@@ -191,24 +191,21 @@ class StudyMaterial(models.Model):
             print(f"Error getting file info: {str(e)}")
             return None
 
+    def get_file_size(self):
+        """Get the file size from local storage"""
+        if self.files and hasattr(self.files, 'size'):
+            return self.files.size
+        return 0
+    
     def get_formatted_size(self):
         """Return human-readable file size"""
-        file_info = self.get_file_info()
-        if file_info and 'size' in file_info:
-            bytes_size = file_info['size']
-            for unit in ['B', 'KB', 'MB', 'GB']:
-                if bytes_size < 1024:
-                    return f"{bytes_size:.1f} {unit}"
-                bytes_size /= 1024
-            return f"{bytes_size:.1f} GB"
-        return "Size unknown"
-    
-    def get_original_filename(self):
-        """Get the original filename"""
-        file_info = self.get_file_info()
-        if file_info and 'original_filename' in file_info:
-            return file_info['original_filename']
-        return "Unnamed file"
+        bytes_size = self.get_file_size()
+        
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if bytes_size < 1024:
+                return f"{bytes_size:.1f} {unit}"
+            bytes_size /= 1024
+        return f"{bytes_size:.1f} GB"
 
     def __str__(self):
         return f"{self.title} - {self.course}"
