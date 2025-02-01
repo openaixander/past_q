@@ -256,21 +256,27 @@ def download_study_materials(request, pk):
     
     # Add file information to each material
     for mat in study_materials:
-        # Get file size
-        mat.formatted_size = mat.get_formatted_size()
-        
-        # Get file format/extension
-        if mat.files:
-            mat.format = mat.files.name.split('.')[-1].lower()
-            # Get original filename without path
-            mat.original_filename = mat.files.name.split('/')[-1]
-        else:
-            mat.format = 'unknown'
-            mat.original_filename = 'unknown'
+        try:
+            # Get file size
+            mat.formatted_size = mat.get_formatted_size()
+            
+            # Get file format/extension
+            if mat.files and mat.files.name:
+                mat.format = mat.files.name.split('.')[-1].lower()
+                mat.original_filename = mat.files.name.split('/')[-1]
+            else:
+                mat.format = ''
+                mat.original_filename = 'No file attached'
 
-        # Set title (use the material type if title is blank)
-        if not mat.title:
-            mat.title = mat.get_material_type_display()
+            # Set title (use the material type if title is blank)
+            if not mat.title:
+                mat.title = mat.get_material_type_display()
+        except Exception as e:
+            print(f"Error processing material {mat.id}: {str(e)}")
+            mat.formatted_size = "Size unavailable"
+            mat.format = ""
+            mat.original_filename = "File unavailable"
+            mat.title = mat.title or mat.get_material_type_display()
 
     context = {
         'material': material,
