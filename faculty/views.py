@@ -290,12 +290,6 @@ def download_file(request, pk):
     response['Content-Type'] = 'application/octet-stream'
     response['Content-Disposition'] = f'attachment; filename="{material.files.name.split("/")[-1]}"'
     return response
-            
-    except Exception as e:
-        print(f"Download error: {str(e)}")
-        messages.error(request, "Unable to download file. Please try again later.")
-        return redirect('faculty:download_materials')
-
 
 def download_multiple_files(request, pk):
     """Download all materials as zip"""
@@ -316,7 +310,6 @@ def download_multiple_files(request, pk):
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
     return response
-
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
