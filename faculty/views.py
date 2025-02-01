@@ -284,7 +284,6 @@ def download_study_materials(request, pk):
     }
     return render(request, 'faculty/download_study_materials.html', context)
 
-
 def download_file(request, pk):
     """Download a single study material file"""
     material = get_object_or_404(StudyMaterial, pk=pk)
@@ -292,30 +291,51 @@ def download_file(request, pk):
     if not material.files:
         raise Http404("File not found")
     
-    response = FileResponse(material.files.open('rb'))
-    response['Content-Type'] = 'application/octet-stream'
-    response['Content-Disposition'] = f'attachment; filename="{material.files.name.split("/")[-1]}"'
-    return response
+    try:
+        # Get the file content directly from the storage backend
+        file_content = material.files.read()
+        
+        # Create the response with the file content
+        response = HttpResponse(file_content, content_type='application/octet-stream')
+        
+        # Set filename for download
+        filename = material.files.name.split('/')[-1]
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+    except Exception as e:
+        messages.error(request, f"Error downloading file: {str(e)}")
+        return redirect('faculty:download_study_materials', pk=material.course.pk)
 
 def download_multiple_files(request, pk):
     """Download all materials as zip"""
     material = get_object_or_404(StudyMaterial, pk=pk)
     study_materials = StudyMaterial.objects.filter(course=material.course, year=material.year)
     
-    zip_buffer = BytesIO()
-    with ZipFile(zip_buffer, 'w') as zip_file:
-        for mat in study_materials:
-            if mat.files:
-                try:
-                    file_name = mat.files.name.split('/')[-1]
-                    zip_file.writestr(file_name, mat.files.read())
-                except Exception as e:
-                    print(f"Skipping {mat.files.name}: {str(e)}")
-                    continue
+    try:
+        zip_buffer = BytesIO()
+        with ZipFile(zip_buffer, 'w') as zip_file:
+            for mat in study_materials:
+                if mat.files:
+                    try:
+                        # Get file content
+                        file_content = mat.files.read()
+                        
+                        # Add to zip with original filename
+                        file_name = mat.files.name.split('/')[-1]
+                        zip_file.writestr(file_name, file_content)
+                    except Exception as e:
+                        print(f"Error adding {mat.files.name} to zip: {str(e)}")
+                        continue
 
-    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-    response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
-    return response
+        # Create response
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{material.course.code}_materials.zip"'
+        return response
+        
+    except Exception as e:
+        messages.error(request, f"Error creating zip file: {str(e)}")
+        return redirect('faculty:download_study_materials', pk=material.pk)
 
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
