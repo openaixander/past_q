@@ -79,6 +79,16 @@ class AccountForm(forms.ModelForm):
 
 class LecturerProfileForm(forms.ModelForm):
 
+    courses = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs= {
+                'class':'form-control',
+                'id':'password',
+                'placeholder':'Password',
+            }
+        ),
+        required=False # This makes the field required (by default, fields are required)
+    )
     class Meta:
         model = LecturerProfile
         fields = [
@@ -87,6 +97,7 @@ class LecturerProfileForm(forms.ModelForm):
             'faculty_position',
             'office_number',
             'id_card',
+            'courses',
         ]
 
     def __init__(self, *args, **kwargs):
