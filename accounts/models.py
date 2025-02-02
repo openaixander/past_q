@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from faculty.models import Course
 from cloudinary.models import CloudinaryField
 # Create your models here.
 
@@ -106,7 +105,6 @@ class LecturerProfile(models.Model):
     employee_id = models.CharField(max_length=50)
     department = models.CharField(max_length=100)
     faculty_position = models.CharField(max_length=20)
-    courses = models.ForeignKey(Course, on_delete=models.CASCADE)
     office_number = models.CharField(max_length=50, blank=True, null=True)
     id_card = CloudinaryField('image', 
                           folder='id_cards/',  # Maintains your folder structure
