@@ -1,1 +1,255 @@
+{% extends 'faculty/base.html' %}
 
+{% block title %}
+Manage Uploads - pastq
+{% endblock title %}
+
+{% block css %}
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 0;
+        }
+        .welcome-banner {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content-section {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        .content-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+        }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .table {
+            margin-bottom: 0;
+            width: 100%;
+        }
+        .table th {
+            background: linear-gradient(45deg, #4a69bd 0%, #6a89cc 100%);
+            color: white;
+            font-weight: 600;
+            padding: 15px;
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            color: #333;
+        }
+        .table tr {
+            transition: all 0.3s ease;
+        }
+        .table tr:hover {
+            background: rgba(74, 105, 189, 0.05);
+        }
+        .delete-btn {
+            background: linear-gradient(45deg, #dc3545 0%, #ff4d5a 100%);
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .delete-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+        .section-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.8rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(45deg, #4a69bd 0%, #6a89cc 100%);
+            border-radius: 3px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #4a69bd;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 60px 0;
+            }
+            .welcome-banner {
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+            .content-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .table td, .table th {
+                padding: 12px 10px;
+                font-size: 0.9rem;
+            }
+            .delete-btn {
+                padding: 6px 15px;
+                font-size: 0.8rem;
+            }
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .table td, .table th {
+                padding: 10px 8px;
+                font-size: 0.85rem;
+            }
+        }
+{% endblock css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container">
+        <div class="welcome-banner">
+            {% include 'faculty/includes/alerts.html' %}
+            <h2>Manage Your Uploads</h2>
+            <p>Here you can view and manage all the content you've uploaded to the platform.</p>
+        </div>
+
+        <!-- Past Questions Section -->
+        <div class="content-section">
+            <h3 class="section-title">Past Questions</h3>
+            {% if past_questions %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course Code</th>
+                                <th>Course Name</th>
+                                <th>Year</th>
+                                <th>Pages</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pq in past_questions %}
+                                <tr>
+                                    <td><strong>{{ pq.course.code }}</strong></td>
+                                    <td>{{ pq.course.name }}</td>
+                                    <td>{{ pq.year.value }}</td>
+                                    <td>{{ pq.images.count }}</td>
+                                    <td>
+                                        <form action="{% url 'faculty:delete_past_question' pq.pk %}" method="post" style="display: inline;" 
+                                              onsubmit="return confirm('Are you sure you want to delete this past question? This action cannot be undone.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="delete-btn">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <p>No past questions uploaded yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Study Materials Section -->
+        <div class="content-section">
+            <h3 class="section-title">Study Materials</h3>
+            {% if study_materials %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Material Type</th>
+                                <th>Year</th>
+                                <th>File Name</th>
+                                <th>Upload Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for material in study_materials %}
+                                <tr>
+                                    <td><strong>{{ material.course.code }}</strong></td>
+                                    <td>{{ material.get_material_type_display }}</td>
+                                    <td>{{ material.year.value }}</td>
+                                    <td title="{{ material.files.name }}">{{ material.files.name|truncatechars:30 }}</td>
+                                    <td>{{ material.uploaded_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <form action="{% url 'faculty:delete_study_material' material.pk %}" method="post" style="display: inline;"
+                                              onsubmit="return confirm('Are you sure you want to delete this study material? This action cannot be undone.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="delete-btn">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-book"></i>
+                    <p>No study materials uploaded yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
