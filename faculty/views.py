@@ -460,14 +460,19 @@ def manage_uploads(request):
     user = request.user
     lecturer_profile = get_object_or_404(LecturerProfile, user=user)
     
-    # Get all past questions and study materials uploaded by courses the lecturer teaches
-    past_questions = PastQuestion.objects.filter(
-        course__in=lecturer_profile.courses.all()
-    ).order_by('-year__value', 'course__code')
-    
-    study_materials = StudyMaterial.objects.filter(
-        course__in=lecturer_profile.courses.all()
-    ).order_by('-uploaded_at')
+    # Get all past questions and study materials
+    if hasattr(lecturer_profile, 'courses'):
+        past_questions = PastQuestion.objects.filter(
+            course__in=lecturer_profile.courses.all()
+        ).order_by('-year__value', 'course__code')
+        
+        study_materials = StudyMaterial.objects.filter(
+            course__in=lecturer_profile.courses.all()
+        ).order_by('-uploaded_at')
+    else:
+        past_questions = PastQuestion.objects.none()
+        study_materials = StudyMaterial.objects.none()
+        messages.warning(request, "No courses have been assigned to your profile yet. Please contact an administrator.")
     
     context = {
         'lecturer_profile': lecturer_profile,
@@ -480,9 +485,10 @@ def manage_uploads(request):
 def delete_past_question(request, pk):
     """Delete a specific past question"""
     past_question = get_object_or_404(PastQuestion, pk=pk)
+    lecturer_profile = request.user.lecturerprofile
     
     # Check if the lecturer has permission to delete this past question
-    if past_question.course not in request.user.lecturerprofile.courses.all():
+    if not hasattr(lecturer_profile, 'courses') or past_question.course not in lecturer_profile.courses.all():
         messages.error(request, "You don't have permission to delete this past question.")
         return redirect('faculty:manage_uploads')
     
@@ -504,9 +510,10 @@ def delete_past_question(request, pk):
 def delete_study_material(request, pk):
     """Delete a specific study material"""
     study_material = get_object_or_404(StudyMaterial, pk=pk)
+    lecturer_profile = request.user.lecturerprofile
     
     # Check if the lecturer has permission to delete this material
-    if study_material.course not in request.user.lecturerprofile.courses.all():
+    if not hasattr(lecturer_profile, 'courses') or study_material.course not in lecturer_profile.courses.all():
         messages.error(request, "You don't have permission to delete this study material.")
         return redirect('faculty:manage_uploads')
     
