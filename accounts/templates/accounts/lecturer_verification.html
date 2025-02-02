@@ -75,6 +75,7 @@
             <h2 class="text-center mb-4">Lecturer Verification</h2>
             <form action="{% url 'accounts:lecturer_info' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
+                {{ form.errors }}
                 <div class="mb-3">
                     <!-- <input type="text" class="form-control" id="employeeId" placeholder="Employee ID" required> -->
                      {{ form.employee_id }}
