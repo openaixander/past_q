@@ -28,10 +28,5 @@ urlpatterns = [
     path('load-courses/', views.load_courses, name='load_courses'),
     path('upload-study-material/', views.upload_study_material, name='upload_study_material'),
     path('load-courses-for-material/', views.load_courses_for_material, name='load_courses_for_material'),
-
-    path('manage-uploads/', views.manage_uploads, name='manage_uploads'),
-    path('delete-past-question/<int:pk>/', views.delete_past_question, name='delete_past_question'),
-    path('delete-study-material/<int:pk>/', views.delete_study_material, name='delete_study_material'),
-
 ]
 
