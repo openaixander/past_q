@@ -106,7 +106,7 @@ class LecturerProfile(models.Model):
     employee_id = models.CharField(max_length=50)
     department = models.CharField(max_length=100)
     faculty_position = models.CharField(max_length=20)
-    courses = models.ForiegnKey(Course, on_delete=models.CASCADE)
+    courses = models.ForeignKey(Course, on_delete=models.CASCADE)
     office_number = models.CharField(max_length=50, blank=True, null=True)
     id_card = CloudinaryField('image', 
                           folder='id_cards/',  # Maintains your folder structure
