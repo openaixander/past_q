@@ -106,6 +106,7 @@ class LecturerProfile(models.Model):
     department = models.CharField(max_length=100)
     faculty_position = models.CharField(max_length=20)
     office_number = models.CharField(max_length=50, blank=True, null=True)
+    courses = models.ManyToManyField('faculty.Course', blank=True)
     id_card = CloudinaryField('image', 
                           folder='id_cards/',  # Maintains your folder structure
                           resource_type='image')
