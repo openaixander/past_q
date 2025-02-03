@@ -337,6 +337,8 @@ def download_multiple_files(request, pk):
         messages.error(request, f"Error creating zip file: {str(e)}")
         return redirect('faculty:download_study_materials', pk=material.pk)
 
+
+
 def no_download_materials_found(request):
     return render(request, 'faculty/no_download_materials_found.html')
 
@@ -436,7 +438,6 @@ def upload_study_material(request):
         'levels': Level.objects.all(),
         'semesters': Semester.objects.all(),
     }
-    return render(request, 'faculty/upload_study_materials.html', context)
     return render(request, 'faculty/upload_study_materials.html', context)
 
 
